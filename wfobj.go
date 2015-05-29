@@ -8,32 +8,59 @@ import (
     "fmt"
 )
 
-func LoadObj(reader io.Reader) error {
+func LoadObj(reader io.Reader) (TriangleMesh, error) {
+    // Arrays for holding original data
+    verticesTmp := NewF32VA(3)
+    normalsTmp := NewF32VA(3)
+    texTmp := NewF32VA(2)
+    // Arrays for holding processed data
+    vertices := NewF32VA(3)
+    normals := NewF32VA(3)
+    texCoords := NewF32VA(3)
+
+    objects := make([]*MeshObject, 0, 1)
+    objects = append(objects, &MeshObject{"unkown", -1, -1, false})
+
     scanner := bufio.NewScanner(reader)
-    var err error
-    vertices := make([]float32, 0, 50)
-    normalsTmp := make([]float32, 0, 50)
-    texTmp := make([]float32, 0, 50)
     for scanner.Scan() {
         line := strings.TrimSpace(scanner.Text())
         tokens := strings.Split(line, " ")
         switch tokens[0] {
         case "g","o":
-            fmt.Println("Object/Group", tokens[1:])
+            obj := MeshObject{tokens[1], -1, -1, false}
+            objects = append(objects, &obj)
         case "v":
-            fmt.Println("Vertex", tokens[1:])
-            vertices, err = parseAndAppendF32(tokens[1:], vertices)
-            if err != nil {return err}
+            err := parseF32Tokens(tokens[1:], verticesTmp)
+            if err != nil {return nil, err}
         case "vn":
-            fmt.Println("Vertex Normal", tokens[1:])
-            normalsTmp, err = parseAndAppendF32(tokens[1:], normalsTmp)
-            if err != nil {return err}
+            err := parseF32Tokens(tokens[1:], normalsTmp)
+            if err != nil {return nil, err}
         case "vt":
-            fmt.Println("Texture Coordinate", tokens[1:])
-            texTmp, err = parseAndAppendF32(tokens[1:], texTmp)
-            if err != nil {return err}
+            err := parseF32Tokens(tokens[1:], texTmp)
+            if err != nil {return nil, err}
         case "f":
-            fmt.Println("Face", tokens[1:])
+            face := tokens[1:]
+            if len(face) != 3 {
+                return nil, fmt.Errorf(
+                    "Loader currently only supports triangular faces")
+            }
+            obj := objects[len(objects)-1]
+            if obj.FirstFloat == -1 {
+                obj.FirstFloat = len(vertices.Values)
+                obj.FloatCount = 0
+            }
+            for _, fidx := range face {
+                vIdx, tIdx, nIdx, err := parseFaceIndicies(fidx)
+                if err != nil {return nil, err}
+                vertices.AppendVector(verticesTmp.GetVector(vIdx-1))
+                if nIdx > 0 {
+                    normals.AppendVector(normalsTmp.GetVector(nIdx-1))
+                }
+                if tIdx > 0 {
+                    texCoords.AppendVector(texTmp.GetVector(tIdx-1))
+                }
+                obj.FloatCount+=3
+            }
         case "s":
             fmt.Println("Smooth Shading Flag", tokens[1:])
         case "mtllib":
@@ -43,15 +70,44 @@ func LoadObj(reader io.Reader) error {
 
         }
     }
-    fmt.Println(vertices)
+
+    if objects[0].FirstFloat == -1 {
+        objects = objects[1:]
+    }
+
+    if len(normals.Values) == 0 {
+        normals = nil
+    }
+    if len(texCoords.Values) == 0 {
+        texCoords = nil
+    }
+    return &triangleMesh{vertices, normals, texCoords, objects}, nil
+}
+
+func parseF32Tokens(tokens []string, floats *f32VA) error {
+    for _,t := range tokens {
+        v, err := strconv.ParseFloat(t, 32)
+        if err != nil { return err }
+        floats.Append(float32(v))
+    }
     return nil
 }
 
-func parseAndAppendF32(tokens []string, floats []float32) ([]float32, error) {
-    for _,t := range tokens {
-        v, err := strconv.ParseFloat(t, 32)
-        if err != nil {return nil, err}
-        floats = append(floats, float32(v))
+func parseFaceIndicies(fidx string) (int, int, int, error) {
+   var vIdx, tIdx, nIdx int = 0,0,0
+    parts := strings.Split(fidx,"/")
+    if len(parts[0]) < 1 { return 0,0,0,fmt.Errorf("Parse error: %s", fidx) }
+    val, err := strconv.ParseUint(parts[0], 10, 32)
+    if err != nil {return 0,0,0,err}
+    vIdx = int(val)
+    if len(parts) == 1 { return vIdx,0,0,nil }
+    if len(parts) != 3 { return 0,0,0,fmt.Errorf("Parse error: %s", fidx) }
+    if len(parts[1]) < 1 {
+        tIdx = 0
     }
-    return floats, nil
+    if len(parts[2]) < 1 { return 0,0,0,fmt.Errorf("Parse error: %s", fidx) }
+    val, err = strconv.ParseUint(parts[2], 10, 32)
+    if err != nil {return 0,0,0,err}
+    nIdx = int(val)
+    return vIdx, tIdx, nIdx, nil
 }

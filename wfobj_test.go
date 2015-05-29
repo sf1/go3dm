@@ -1,6 +1,7 @@
 package go3dm
 
 import (
+    "fmt"
     "testing"
     "strings"
 )
@@ -64,8 +65,8 @@ v -2.714148 1.000000 -1.000000
 vn 0.000000 -1.000000 0.000000
 vn 0.000000 1.000000 0.000000
 vn 1.000000 0.000000 0.000000
-vn -0.000000 0.000000 1.000000
-vn -1.000000 -0.000000 -0.000000
+vn 0.000000 0.000000 1.000000
+vn -1.000000 0.000000 0.000000
 vn 0.000000 0.000000 -1.000000
 usemtl blueCube
 s off
@@ -83,8 +84,26 @@ f 11//13 15//13 12//13
 f 13//14 9//14 16//14
 `
 
-func TestLoadObj(t *testing.T) {
-    t.Log("Testing LoadObj")
+func TestLoadObj1(t *testing.T) {
+    t.Log("Testing LoadObj with square mesh")
     r := strings.NewReader(squareMesh)
-    LoadObj(r)
+    mesh, err := LoadObj(r)
+    if err != nil { t.Error(err) }
+    printMesh(mesh)
+}
+
+func TestLoadObj2(t *testing.T) {
+    t.Log("Testing LoadObj with cubes mesh")
+    r := strings.NewReader(cubesMesh)
+    mesh, err := LoadObj(r)
+    if err != nil { t.Error(err) }
+    printMesh(mesh)
+}
+
+func printMesh(mesh TriangleMesh) {
+    vertices, _, normals := mesh.VTN()
+    for i := 0; i < len(vertices)/3; i++  {
+        vIdx := i*3
+        fmt.Println(vertices[vIdx:vIdx+3],"//", normals[vIdx:vIdx+3])
+    }
 }
