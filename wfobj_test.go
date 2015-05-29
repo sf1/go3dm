@@ -5,7 +5,21 @@ import (
     "strings"
 )
 
-const sampleOBJ string = `
+const squareMesh string = `
+mtllib square.mtl
+o square
+v -1.000000 0.000000 1.000000
+v 1.000000 0.000000 1.000000
+v -1.000000 0.000000 -1.000000
+v 1.000000 0.000000 -1.000000
+vn 0.000000 1.000000 0.000000
+usemtl square
+s off
+f 2//1 4//1 3//1
+f 1//1 2//1 3//1
+`
+
+const cubesMesh string = `
 mtllib cubes.mtl
 o redCube
 v 0.414876 -1.594997 -0.480466
@@ -71,6 +85,6 @@ f 13//14 9//14 16//14
 
 func TestLoadObj(t *testing.T) {
     t.Log("Testing LoadObj")
-    r := strings.NewReader(sampleOBJ)
+    r := strings.NewReader(squareMesh)
     LoadObj(r)
 }
