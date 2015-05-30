@@ -20,6 +20,30 @@ f 2//1 4//1 3//1
 f 1//1 2//1 3//1
 `
 
+const square2MeshOBJ string = `
+mtllib square2.mtl
+o square
+v -1.000000 0.000000 1.000000
+v 1.000000 0.000000 1.000000
+v -1.000000 0.000000 -1.000000
+v 1.000000 0.000000 -1.000000
+usemtl square
+s off
+f 2 4 3 
+f 1 2 3
+`
+
+const squareMTL string = `
+newmtl square
+Ns 96.078431
+Ka 0.000000 0.000000 0.000000
+Kd 0.000000 0.000000 0.640000
+Ks 0.500000 0.500000 0.500000
+Ni 1.000000
+d 1.000000
+illum 2
+`
+
 var squareMeshVertices = []float32{
     1.000000, 0.000000, 1.000000,
     1.000000, 0.000000, -1.000000,
@@ -37,19 +61,6 @@ var squareMeshNormals = []float32{
     0.000000, 1.000000, 0.000000,
     0.000000, 1.000000, 0.000000,
 }
-
-const square2MeshOBJ string = `
-mtllib square2.mtl
-o square
-v -1.000000 0.000000 1.000000
-v 1.000000 0.000000 1.000000
-v -1.000000 0.000000 -1.000000
-v 1.000000 0.000000 -1.000000
-usemtl square
-s off
-f 2 4 3 
-f 1 2 3
-`
 
 const cubesMeshOBJ string = `
 mtllib cubes.mtl
@@ -113,6 +124,26 @@ f 9//11 13//11 10//11
 f 10//12 14//12 11//12
 f 11//13 15//13 12//13
 f 13//14 9//14 16//14
+`
+
+const cubesMTL string = `
+newmtl blueCube
+Ns 96.078431
+Ka 0.000000 0.000000 0.000000
+Kd 0.000000 0.000000 0.640000
+Ks 0.500000 0.500000 0.500000
+Ni 1.000000
+d 1.000000
+illum 2
+
+newmtl redCube
+Ns 96.078431
+Ka 0.000000 0.000000 0.000000
+Kd 0.640000 0.000000 0.000000
+Ks 0.500000 0.500000 0.500000
+Ni 1.000000
+d 1.000000
+illum 2
 `
 
 var cubesMeshVertices = []float32 {
@@ -291,6 +322,16 @@ func TestLoadCubesMesh(t *testing.T) {
                 cubesMeshVertices,
                 nil,
                 cubesMeshNormals)
+}
+
+func TestLoadCubesMTL(t *testing.T) {
+    t.Log("Testing LoadMTLFrom with cubes material")
+    r := strings.NewReader(cubesMTL)
+    materials, err := LoadMTLFrom(r)
+    if err != nil { t.Error(err) }
+    for _, material := range materials {
+        fmt.Println(material)
+    }
 }
 
 func testLoadOBJFrom(t *testing.T, meshStr string,

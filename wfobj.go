@@ -31,13 +31,13 @@ func LoadOBJFrom(reader io.Reader) (*OBJMesh, error) {
             groups = append(groups,
                 newOBJGroup(tokens[1], -1, -1, false, ""))
         case "v":
-            err := parseF32Tokens(tokens[1:], verticesTmp)
+            err := parseAndAppendF32Tokens(tokens[1:], verticesTmp)
             if err != nil {return nil, err}
         case "vn":
-            err := parseF32Tokens(tokens[1:], normalsTmp)
+            err := parseAndAppendF32Tokens(tokens[1:], normalsTmp)
             if err != nil {return nil, err}
         case "vt":
-            err := parseF32Tokens(tokens[1:], texTmp)
+            err := parseAndAppendF32Tokens(tokens[1:], texTmp)
             if err != nil {return nil, err}
         case "f":
             face := tokens[1:]
@@ -96,13 +96,76 @@ func LoadOBJFrom(reader io.Reader) (*OBJMesh, error) {
         groups, mtllib), nil
 }
 
-func parseF32Tokens(tokens []string, floats *f32VA) error {
+func LoadMTLFrom(reader io.Reader) ([]*Material, error) {
+    scanner := bufio.NewScanner(reader)
+    materials := make([]*Material, 0, 1)
+    for scanner.Scan() {
+        line := strings.TrimSpace(scanner.Text())
+        tokens := strings.Split(line, " ")
+        if tokens[0] == "newmtl" {
+            m := new(Material)
+            m.Name = strings.Join(tokens[1:]," ")
+            materials = append(materials, m)
+            fmt.Println("Material:", m.Name)
+        } else if len(materials) > 0 {
+            var err error
+            m := materials[len(materials)-1]
+            switch tokens[0] {
+            case "Ka":
+                m.Ka, err = parseF32Tokens(tokens[1:])
+                if err != nil {return nil, err}
+                fmt.Println("Ka", m.Ka)
+            case "Kd":
+                m.Ka, err = parseF32Tokens(tokens[1:])
+                if err != nil {return nil, err}
+                fmt.Println("Kd", m.Ka)
+            case "Ks":
+                m.Ks, err = parseF32Tokens(tokens[1:])
+                if err != nil {return nil, err}
+                fmt.Println("Ks", m.Ks)
+            case "Ns":
+                val, err := parseF32Tokens(tokens[1:])
+                if err != nil {return nil, err}
+                m.Ns = val[0]
+                fmt.Println("Ns", m.Ns)
+            case "d","Tr":
+                val, err := parseF32Tokens(tokens[1:])
+                if err != nil {return nil, err}
+                m.Tr = val[0]
+                fmt.Println("Tr", m.Tr)
+            case "map_Ka":
+                m.KaMapName = strings.Join(tokens[1:]," ")
+                fmt.Println(m.KaMapName)
+            case "map_Kd":
+                m.KdMapName = strings.Join(tokens[1:]," ")
+                fmt.Println(m.KdMapName)
+            case "map_Ks":
+                m.KsMapName = strings.Join(tokens[1:]," ")
+                fmt.Println(m.KsMapName)
+
+            }
+        }
+    }
+    return nil, nil
+}
+
+func parseAndAppendF32Tokens(tokens []string, floats *f32VA) error {
     for _,t := range tokens {
         v, err := strconv.ParseFloat(t, 32)
         if err != nil { return err }
         floats.Append(float32(v))
     }
     return nil
+}
+
+func parseF32Tokens(tokens []string) ([]float32, error) {
+    result := make([]float32, 0, 1)
+    for _,t := range tokens {
+        v, err := strconv.ParseFloat(t, 32)
+        if err != nil { return nil, err }
+        result = append(result, float32(v))
+    }
+    return result, nil
 }
 
 func parseFaceIndicies(fidx string) (int, int, int, error) {
