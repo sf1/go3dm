@@ -102,7 +102,7 @@ f 11//13 15//13 12//13
 f 13//14 9//14 16//14
 `
 
-var cubesVertices = []float32 {
+var cubesMeshVertices = []float32 {
     // red cube
     0.414876, -0.387669, -1.687793, // v04
     0.414876, -1.594997, -1.687793, // v03
@@ -179,7 +179,7 @@ var cubesVertices = []float32 {
     -2.714148, 1.000000, -1.000000, // v16
 }
 
-var cubesNormals = []float32 {
+var cubesMeshNormals = []float32 {
     // red cube
     -0.577300, 0.577300, -0.577300, // n01
     -0.577300, -0.577300, -0.577300, // n02
@@ -256,20 +256,74 @@ var cubesNormals = []float32 {
     0.000000, 0.000000, -1.000000, // n14
 }
 
-func TestLoadObj1(t *testing.T) {
+func TestLoadSquareMesh(t *testing.T) {
     t.Log("Testing LoadObj with square mesh")
-    r := strings.NewReader(squareMeshOBJ)
-    mesh, err := LoadObj(r)
-    if err != nil { t.Error(err) }
-    printMesh(mesh)
+    testLoadMesh(t, squareMeshOBJ,
+                squareMeshVertices,
+                nil,
+                squareMeshNormals)
 }
 
-func TestLoadObj2(t *testing.T) {
+func TestLoadCubesMesh(t *testing.T) {
     t.Log("Testing LoadObj with cubes mesh")
-    r := strings.NewReader(cubesMeshOBJ)
+    testLoadMesh(t, cubesMeshOBJ,
+                cubesMeshVertices,
+                nil,
+                cubesMeshNormals)
+}
+
+func testLoadMesh(t *testing.T, meshStr string,
+                  expectedVertices []float32,
+                  expectedTexCoords []float32,
+                  expectedNormals []float32) {
+    var i int
+    r := strings.NewReader(meshStr)
     mesh, err := LoadObj(r)
     if err != nil { t.Error(err) }
-    printMesh(mesh)
+    vertices, texcoords, normals := mesh.VTN()
+    if vertices == nil {
+        t.Error("Didn't load any vertices")
+    }
+    if expectedVertices != nil {
+        if len(vertices) != len(expectedVertices) {
+            t.Error("Unexpected number of vertices")
+        }
+        for i = 0; i < len(vertices); i++ {
+            if vertices[i] != expectedVertices[i] {
+                t.Errorf("Unexpected vertex data at index %d", i)
+            }
+        }
+    }
+    if normals != nil {
+        if len(vertices) != len(normals) {
+            t.Error("Number of normals should equal number of vertices")
+        }
+        if expectedNormals != nil {
+            if len(normals) != len(expectedNormals) {
+                t.Error("Unexpected number of normals")
+            }
+            for i = 0; i < len(normals); i++ {
+                if normals[i] != expectedNormals[i] {
+                    t.Errorf("Unexpected normal data at index %d", i)
+                }
+            }
+        }
+    }
+    if texcoords != nil {
+        if len(vertices)/3 != len(texcoords)/2 {
+            t.Error("Number of texture coords should equal number of vertices")
+        }
+        if expectedTexCoords != nil {
+            if len(texcoords) != len(expectedTexCoords) {
+                t.Error("Unexpected number of texture coordinates")
+            }
+            for i = 0; i < len(normals); i++ {
+                if texcoords[i] != expectedTexCoords[i] {
+                    t.Errorf("Unexpected textrue data at index %d", i)
+                }
+            }
+        }
+    }
 }
 
 func printMesh(mesh TriangleMesh) {
