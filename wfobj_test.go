@@ -38,6 +38,19 @@ var squareMeshNormals = []float32{
     0.000000, 1.000000, 0.000000,
 }
 
+const square2MeshOBJ string = `
+mtllib square2.mtl
+o square
+v -1.000000 0.000000 1.000000
+v 1.000000 0.000000 1.000000
+v -1.000000 0.000000 -1.000000
+v 1.000000 0.000000 -1.000000
+usemtl square
+s off
+f 2 4 3 
+f 1 2 3
+`
+
 const cubesMeshOBJ string = `
 mtllib cubes.mtl
 o redCube
@@ -257,28 +270,36 @@ var cubesMeshNormals = []float32 {
 }
 
 func TestLoadSquareMesh(t *testing.T) {
-    t.Log("Testing LoadObj with square mesh")
-    testLoadMesh(t, squareMeshOBJ,
+    t.Log("Testing LoadOBJFrom with square mesh")
+    testLoadOBJFrom(t, squareMeshOBJ,
                 squareMeshVertices,
                 nil,
                 squareMeshNormals)
 }
 
+func TestLoadSquare2Mesh(t *testing.T) {
+    t.Log("Testing LoadOBJFrom with square 2 mesh")
+    testLoadOBJFrom(t, square2MeshOBJ,
+                squareMeshVertices,
+                nil,
+                nil)
+}
+
 func TestLoadCubesMesh(t *testing.T) {
-    t.Log("Testing LoadObj with cubes mesh")
-    testLoadMesh(t, cubesMeshOBJ,
+    t.Log("Testing LoadOBJFrom with cubes mesh")
+    testLoadOBJFrom(t, cubesMeshOBJ,
                 cubesMeshVertices,
                 nil,
                 cubesMeshNormals)
 }
 
-func testLoadMesh(t *testing.T, meshStr string,
+func testLoadOBJFrom(t *testing.T, meshStr string,
                   expectedVertices []float32,
                   expectedTexCoords []float32,
                   expectedNormals []float32) {
     var i int
     r := strings.NewReader(meshStr)
-    mesh, err := LoadObj(r)
+    mesh, err := LoadOBJFrom(r)
     if err != nil { t.Error(err) }
     vertices, texcoords, normals := mesh.VTN()
     if vertices == nil {
@@ -324,12 +345,25 @@ func testLoadMesh(t *testing.T, meshStr string,
             }
         }
     }
+    //printMesh(mesh)
 }
 
-func printMesh(mesh TriangleMesh) {
-    vertices, _, normals := mesh.VTN()
-    for i := 0; i < len(vertices)/3; i++  {
-        vIdx := i*3
-        fmt.Println(vertices[vIdx:vIdx+3],"//", normals[vIdx:vIdx+3])
+func printMesh(mesh *OBJMesh) {
+    fmt.Println("Material Lib:",mesh.mtllib)
+    vertices, texcoords, normals := mesh.VTN()
+    fmt.Println("Vertices:\n", vertices)
+    if texcoords != nil {
+        fmt.Println("Texture Coordinates:\n", normals)
+    }
+    if normals != nil {
+        fmt.Println("Normals:\n", normals)
+    }
+    fmt.Println("Objects")
+    for _, obj := range mesh.objects {
+        fmt.Printf("------------\n%s\n------------\n", obj.Name)
+        fmt.Printf("Material: %s\n", obj.MaterialRef)
+        fmt.Printf("Smooth: %t\n", obj.Smooth)
+        fmt.Printf("Offset: %d\n", obj.FirstFloat)
+        fmt.Printf("Count: %d\n", obj.FloatCount)
     }
 }

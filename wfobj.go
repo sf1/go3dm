@@ -8,7 +8,7 @@ import (
     "fmt"
 )
 
-func LoadObj(reader io.Reader) (TriangleMesh, error) {
+func LoadOBJFrom(reader io.Reader) (*OBJMesh, error) {
     // Arrays for holding original data
     verticesTmp := NewF32VA(3)
     normalsTmp := NewF32VA(3)
@@ -18,8 +18,9 @@ func LoadObj(reader io.Reader) (TriangleMesh, error) {
     normals := NewF32VA(3)
     texCoords := NewF32VA(3)
 
-    objects := make([]*MeshObject, 0, 1)
-    objects = append(objects, &MeshObject{"unkown", -1, -1, false})
+    objects := make([]*OBJMeshObject, 0, 1)
+    objects = append(objects, &OBJMeshObject{"unkown", -1, -1, false, ""})
+    mtllib := ""
 
     scanner := bufio.NewScanner(reader)
     for scanner.Scan() {
@@ -27,7 +28,7 @@ func LoadObj(reader io.Reader) (TriangleMesh, error) {
         tokens := strings.Split(line, " ")
         switch tokens[0] {
         case "g","o":
-            obj := MeshObject{tokens[1], -1, -1, false}
+            obj := OBJMeshObject{tokens[1], -1, -1, false, ""}
             objects = append(objects, &obj)
         case "v":
             err := parseF32Tokens(tokens[1:], verticesTmp)
@@ -62,12 +63,15 @@ func LoadObj(reader io.Reader) (TriangleMesh, error) {
                 obj.FloatCount+=3
             }
         case "s":
-            fmt.Println("Smooth Shading Flag", tokens[1:])
+            obj := objects[len(objects)-1]
+            obj.Smooth = false
+            if tokens[1] == "1" {
+                obj.Smooth = true
+            }
         case "mtllib":
-            fmt.Println("Material Library", tokens[1:])
+            mtllib = strings.Join(tokens[1:]," ")
         case "usemtl":
-            fmt.Println("Material Reference", tokens[1:])
-
+            objects[len(objects)-1].MaterialRef = strings.Join(tokens[1:]," ")
         }
     }
 
@@ -81,7 +85,7 @@ func LoadObj(reader io.Reader) (TriangleMesh, error) {
     if len(texCoords.Values) == 0 {
         texCoords = nil
     }
-    return &triangleMesh{vertices, normals, texCoords, objects}, nil
+    return &OBJMesh{vertices, normals, texCoords, objects, mtllib}, nil
 }
 
 func parseF32Tokens(tokens []string, floats *f32VA) error {

@@ -4,46 +4,47 @@ type TriangleMesh interface {
     Vertices() []float32
     Normals() []float32
     TextureCoords() []float32
-    Objects() []*MeshObject
     VTN() ([]float32, []float32, []float32)
 }
 
-type MeshObject struct {
+type OBJMesh struct {
+    vertices *f32VA
+    normals *f32VA
+    texCoords *f32VA
+    objects []*OBJMeshObject
+    mtllib string
+}
+
+func (om *OBJMesh) Vertices() []float32 {
+    return om.vertices.Values
+}
+
+func (om *OBJMesh) Normals() []float32 {
+    if om.normals == nil { return nil }
+    return om.normals.Values
+}
+
+func (om *OBJMesh) TextureCoords() []float32 {
+    if om.texCoords == nil { return nil }
+    return om.texCoords.Values
+}
+
+func (om *OBJMesh) VTN() ([]float32, []float32, []float32) {
+    normals := om.Normals()
+    texc := om.TextureCoords()
+    return om.vertices.Values, texc, normals
+}
+
+func (om *OBJMesh) MTLLib() string {
+    return om.mtllib
+}
+
+type OBJMeshObject struct {
     Name string
     FirstFloat int
     FloatCount int
     Smooth bool
-}
-
-type triangleMesh struct {
-    vertices *f32VA
-    normals *f32VA
-    texCoords *f32VA
-    objects []*MeshObject
-}
-
-func (tm *triangleMesh) Vertices() []float32 {
-    return tm.vertices.Values
-}
-
-func (tm *triangleMesh) Normals() []float32 {
-    if tm.Normals == nil { return nil }
-    return tm.normals.Values
-}
-
-func (tm *triangleMesh) TextureCoords() []float32 {
-    if tm.texCoords == nil { return nil }
-    return tm.texCoords.Values
-}
-
-func (tm *triangleMesh) VTN() ([]float32, []float32, []float32) {
-    normals := tm.Normals()
-    texc := tm.TextureCoords()
-    return tm.vertices.Values, texc, normals
-}
-
-func (tm *triangleMesh) Objects() []*MeshObject {
-    return tm.objects
+    MaterialRef string
 }
 
 type f32VA struct {
