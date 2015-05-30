@@ -1,50 +1,39 @@
 package go3dm
 
-type TriangleMesh interface {
-    Vertices() []float32
-    Normals() []float32
-    TextureCoords() []float32
-    VTN() ([]float32, []float32, []float32)
+type Mesh struct {
+    Vertices []float32
+    Normals []float32
+    TextureCoords []float32
+    Objects []*MeshObject
 }
 
-type OBJMesh struct {
-    vertices *f32VA
-    normals *f32VA
-    texCoords *f32VA
-    objects []*OBJMeshObject
-    mtllib string
+func (m *Mesh) VTN() ([]float32, []float32, []float32) {
+    return m.Vertices, m.TextureCoords, m.Normals
 }
 
-func (om *OBJMesh) Vertices() []float32 {
-    return om.vertices.Values
-}
-
-func (om *OBJMesh) Normals() []float32 {
-    if om.normals == nil { return nil }
-    return om.normals.Values
-}
-
-func (om *OBJMesh) TextureCoords() []float32 {
-    if om.texCoords == nil { return nil }
-    return om.texCoords.Values
-}
-
-func (om *OBJMesh) VTN() ([]float32, []float32, []float32) {
-    normals := om.Normals()
-    texc := om.TextureCoords()
-    return om.vertices.Values, texc, normals
-}
-
-func (om *OBJMesh) MTLLib() string {
-    return om.mtllib
-}
-
-type OBJMeshObject struct {
+type MeshObject struct {
     Name string
-    FirstFloat int
-    FloatCount int
-    Smooth bool
-    MaterialRef string
+    Offset int
+    Count int
+    Material *Material
+}
+
+type Material struct {
+    Name string
+    Ka []float32
+    Kd []float32
+    Ks []float32
+    Ns float32
+    Tr float32
+    KaMapName string
+    KdMapName string
+    KsMapName string
+}
+
+func NewMaterial(name string) *Material {
+    mat := new(Material)
+    mat.Name = name
+    return mat
 }
 
 type f32VA struct {

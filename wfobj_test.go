@@ -349,7 +349,7 @@ func testLoadOBJFrom(t *testing.T, meshStr string,
 }
 
 func printMesh(mesh *OBJMesh) {
-    fmt.Println("Material Lib:",mesh.mtllib)
+    fmt.Println("Material Lib:",mesh.MTLLib)
     vertices, texcoords, normals := mesh.VTN()
     fmt.Println("Vertices:\n", vertices)
     if texcoords != nil {
@@ -359,11 +359,11 @@ func printMesh(mesh *OBJMesh) {
         fmt.Println("Normals:\n", normals)
     }
     fmt.Println("Objects")
-    for _, obj := range mesh.objects {
-        fmt.Printf("------------\n%s\n------------\n", obj.Name)
-        fmt.Printf("Material: %s\n", obj.MaterialRef)
-        fmt.Printf("Smooth: %t\n", obj.Smooth)
-        fmt.Printf("Offset: %d\n", obj.FirstFloat)
-        fmt.Printf("Count: %d\n", obj.FloatCount)
+    for _, g := range mesh.Groups {
+        fmt.Printf("------------\n%s\n------------\n", g.Name)
+        fmt.Printf("Material: %s\n", g.MaterialRef)
+        fmt.Printf("Smooth: %t\n", g.Smooth)
+        fmt.Printf("Offset: %d\n", g.Offset)
+        fmt.Printf("Count: %d\n", g.Count)
     }
 }
