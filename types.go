@@ -15,7 +15,8 @@ type MeshObject struct {
     Name string
     Offset int
     Count int
-    Material *Material
+    MaterialRef string
+    Smooth bool
 }
 
 type Material struct {

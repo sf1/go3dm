@@ -5,8 +5,39 @@ import (
     "bufio"
     "strings"
     "strconv"
+    "os"
     "fmt"
+    "path/filepath"
 )
+
+func LoadOBJ(objPath string) (*Mesh, map[string]*Material, error) {
+    objPath, err := filepath.Abs(objPath)
+    if err != nil { return nil, nil, err}
+    absDir := filepath.Dir(objPath)
+    matMap := make(map[string]*Material)
+    objFile, err := os.Open(objPath)
+    if err != nil { return nil, nil, err}
+    defer objFile.Close()
+    objMesh, err := LoadOBJFrom(objFile)
+    if err != nil { return nil, nil, err}
+    if objMesh.MTLLib != "" {
+        mtlPath := objMesh.MTLLib
+        if !filepath.IsAbs(mtlPath) {
+            mtlPath = filepath.Join(absDir, objMesh.MTLLib)
+        }
+        mtlFile, err := os.Open(mtlPath)
+        if err != nil {
+            return nil, nil, fmt.Errorf("Can't open mtllib: %s", objMesh.MTLLib)
+        }
+        defer mtlFile.Close()
+        matList, err := LoadMTLFrom(mtlFile)
+        if err != nil { return nil, nil, err}
+        for _, mat := range matList {
+            matMap[mat.Name] = mat
+        }
+    }
+    return &objMesh.Mesh, matMap, nil
+}
 
 func LoadOBJFrom(reader io.Reader) (*OBJMesh, error) {
     // Arrays for holding original data
@@ -18,8 +49,8 @@ func LoadOBJFrom(reader io.Reader) (*OBJMesh, error) {
     normals := NewF32VA(3)
     texCoords := NewF32VA(3)
 
-    groups := make([]*OBJGroup, 0, 1)
-    groups = append(groups, newOBJGroup("unkown", -1, -1, false, ""))
+    groups := make([]*MeshObject, 0, 1)
+    groups = append(groups, &MeshObject{"unkown", -1, -1, "", false})
     mtllib := ""
 
     scanner := bufio.NewScanner(reader)
@@ -28,8 +59,7 @@ func LoadOBJFrom(reader io.Reader) (*OBJMesh, error) {
         tokens := strings.Split(line, " ")
         switch tokens[0] {
         case "g","o":
-            groups = append(groups,
-                newOBJGroup(tokens[1], -1, -1, false, ""))
+            groups = append(groups, &MeshObject{tokens[1], -1, -1, "",false})
         case "v":
             err := parseAndAppendF32Tokens(tokens[1:], verticesTmp)
             if err != nil {return nil, err}
@@ -91,9 +121,9 @@ func LoadOBJFrom(reader io.Reader) (*OBJMesh, error) {
         texCoordsFA = texCoords.Values
     }
 
-    return newOBJMesh(
-        verticesFA, normalsFA, texCoordsFA,
-        groups, mtllib), nil
+    return &OBJMesh{
+            Mesh{verticesFA, normalsFA, texCoordsFA, groups},
+            mtllib}, nil
 }
 
 func LoadMTLFrom(reader io.Reader) ([]*Material, error) {
@@ -106,7 +136,6 @@ func LoadMTLFrom(reader io.Reader) ([]*Material, error) {
             m := new(Material)
             m.Name = strings.Join(tokens[1:]," ")
             materials = append(materials, m)
-            fmt.Println("Material:", m.Name)
         } else if len(materials) > 0 {
             var err error
             m := materials[len(materials)-1]
@@ -114,39 +143,31 @@ func LoadMTLFrom(reader io.Reader) ([]*Material, error) {
             case "Ka":
                 m.Ka, err = parseF32Tokens(tokens[1:])
                 if err != nil {return nil, err}
-                fmt.Println("Ka", m.Ka)
             case "Kd":
-                m.Ka, err = parseF32Tokens(tokens[1:])
+                m.Kd, err = parseF32Tokens(tokens[1:])
                 if err != nil {return nil, err}
-                fmt.Println("Kd", m.Ka)
             case "Ks":
                 m.Ks, err = parseF32Tokens(tokens[1:])
                 if err != nil {return nil, err}
-                fmt.Println("Ks", m.Ks)
             case "Ns":
                 val, err := parseF32Tokens(tokens[1:])
                 if err != nil {return nil, err}
                 m.Ns = val[0]
-                fmt.Println("Ns", m.Ns)
             case "d","Tr":
                 val, err := parseF32Tokens(tokens[1:])
                 if err != nil {return nil, err}
                 m.Tr = val[0]
-                fmt.Println("Tr", m.Tr)
             case "map_Ka":
                 m.KaMapName = strings.Join(tokens[1:]," ")
-                fmt.Println(m.KaMapName)
             case "map_Kd":
                 m.KdMapName = strings.Join(tokens[1:]," ")
-                fmt.Println(m.KdMapName)
             case "map_Ks":
                 m.KsMapName = strings.Join(tokens[1:]," ")
-                fmt.Println(m.KsMapName)
 
             }
         }
     }
-    return nil, nil
+    return materials, nil
 }
 
 func parseAndAppendF32Tokens(tokens []string, floats *f32VA) error {
@@ -189,29 +210,6 @@ func parseFaceIndicies(fidx string) (int, int, int, error) {
 
 type OBJMesh struct {
     Mesh
-    Groups []*OBJGroup
     MTLLib string
 }
 
-func newOBJMesh(verts, norms, texcoords []float32,
-                groups []*OBJGroup, mtllib string) *OBJMesh {
-    om := &OBJMesh{Mesh{verts, norms, texcoords, nil}, groups, mtllib}
-    om.Objects = make([]*MeshObject, 0, len(groups))
-    for _,g := range groups {
-        om.Objects = append(om.Objects, &g.MeshObject)
-    }
-    return om
-}
-
-type OBJGroup struct {
-    MeshObject
-    Smooth bool
-    MaterialRef string
-}
-
-func newOBJGroup(name string, offset, count int,
-                      smooth bool, matref string) *OBJGroup {
-    return &OBJGroup{
-        MeshObject{name, offset, count, nil},
-        smooth, matref}
-}

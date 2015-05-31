@@ -329,8 +329,50 @@ func TestLoadCubesMTL(t *testing.T) {
     r := strings.NewReader(cubesMTL)
     materials, err := LoadMTLFrom(r)
     if err != nil { t.Error(err) }
-    for _, material := range materials {
-        fmt.Println(material)
+    if len(materials) != 2 {
+        t.Error("Expected 2 materials")
+    }
+    if materials[0].Name != "blueCube" {
+        t.Error("Expected blueCube material")
+    }
+    if materials[0].Ns != 96.078431 {
+        t.Error("Wrong Ns value")
+    }
+    if materials[0].Ka[2] != 0.0{
+        t.Error("Wrong Ka value")
+    }
+    if materials[0].Kd[2] != 0.64{
+        t.Error("Wrong Kd value")
+    }
+    if materials[0].Ks[1] != 0.5{
+        t.Error("Wrong Ks value")
+    }
+
+    if materials[1].Name != "redCube" {
+        t.Error("Expected redCube material")
+    }
+    if materials[1].Ns != 96.078431 {
+        t.Error("Wrong Ns value")
+    }
+    if materials[1].Ka[2] != 0.0{
+        t.Error("Wrong Ka value")
+    }
+    if materials[1].Kd[0] != 0.64{
+        t.Error("Wrong Kd value")
+    }
+    if materials[1].Ks[2] != 0.5{
+        t.Error("Wrong Ks value")
+    }
+
+}
+
+func TestLoadOBJ(t *testing.T) {
+    t.Log("Testing LoadOBJ with cubes mesh")
+    mesh, materials, err := LoadOBJ("test-meshes/cubes.obj")
+    if err != nil { t.Error(err) }
+    fmt.Println(mesh)
+    for _, mat := range materials {
+        fmt.Println(mat)
     }
 }
 
@@ -389,8 +431,7 @@ func testLoadOBJFrom(t *testing.T, meshStr string,
     //printMesh(mesh)
 }
 
-func printMesh(mesh *OBJMesh) {
-    fmt.Println("Material Lib:",mesh.MTLLib)
+func printMesh(mesh *Mesh) {
     vertices, texcoords, normals := mesh.VTN()
     fmt.Println("Vertices:\n", vertices)
     if texcoords != nil {
@@ -400,7 +441,7 @@ func printMesh(mesh *OBJMesh) {
         fmt.Println("Normals:\n", normals)
     }
     fmt.Println("Objects")
-    for _, g := range mesh.Groups {
+    for _, g := range mesh.Objects {
         fmt.Printf("------------\n%s\n------------\n", g.Name)
         fmt.Printf("Material: %s\n", g.MaterialRef)
         fmt.Printf("Smooth: %t\n", g.Smooth)
