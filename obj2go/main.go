@@ -4,6 +4,7 @@ import (
     "fmt"
     "flag"
     "os"
+    "github.com/sf1/go3dm"
 )
 
 const usage string = `
@@ -30,8 +31,23 @@ func main() {
     }
     flag.Parse()
     args := flag.Args()
-    if len(args) == 0 {
+    if len(args) != 1 {
         flag.Usage()
         return
     }
+    if _, err := os.Stat(dest); os.IsNotExist(err) {
+        fmt.Fprintf(os.Stderr, "Error: folder %s does not exist\n", dest)
+        os.Exit(1)
+    }
+    _, _, err := go3dm.LoadOBJ(args[0])
+    if err != nil { complainAndExit(err) }
+    f, err := os.Create("out.go")
+    if err != nil { complainAndExit(err) }
+    defer f.Close()
+    fmt.Fprintf(f, "package %s", pkg)
+}
+
+func complainAndExit(err error) {
+    fmt.Fprintf(os.Stderr, "Error: %s\n", err)
+    os.Exit(1)
 }
