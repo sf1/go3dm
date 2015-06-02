@@ -19,6 +19,15 @@ type MeshObject struct {
     Smooth bool
 }
 
+func (mo *MeshObject) VertexOffset() int32 {
+    return int32(mo.Offset / 3)
+}
+
+func (mo *MeshObject) VertexCount() int32 {
+    return int32(mo.Count / 3)
+}
+
+
 type Material struct {
     Name string
     Ka []float32
