@@ -88,7 +88,7 @@ func main() {
         os.MkdirAll(pkg, 0755)
     }
     outFile := filepath.Join(pkg, filepath.Base(args[0]) + ".go")
-    mesh, _, err := go3dm.LoadOBJ(args[0])
+    mesh, materials, err := go3dm.LoadOBJ(args[0])
     if err != nil { panic(err) }
     // Write types.go
     f, err := os.Create(filepath.Join(pkg, "types.go"))
@@ -146,5 +146,27 @@ func main() {
     fmt.Fprintf(f, "\n    },")
     fmt.Fprintf(f, "\n}")
     // Process materials
-    // ...
+    if len(materials) == 0 {
+        return
+    }
+    fmt.Fprintf(f,
+        "\n\nvar %sMaterials map[string]*Material = map[string]*Material {",
+        name)
+    for key, mat := range materials {
+        fmt.Fprintf(f,"\n    \"%s\": &Material{\n        \"%s\",",
+            key, mat.Name)
+        fmt.Fprintf(f,"\n        []float32{%f, %f, %f},",
+            mat.Ka[0], mat.Ka[1], mat.Ka[2])
+        fmt.Fprintf(f,"\n        []float32{%f, %f, %f},",
+            mat.Kd[0], mat.Kd[1], mat.Kd[2])
+        fmt.Fprintf(f,"\n        []float32{%f, %f, %f},",
+            mat.Ks[0], mat.Ks[1], mat.Ks[2])
+        fmt.Fprintf(f,"\n        %f, %f,", mat.Ns, mat.Tr)
+        fmt.Fprintf(f,"\n        \"%s\", \"%s\", \"%s\",",
+            mat.KaMapName,
+            mat.KdMapName,
+            mat.KsMapName)
+        fmt.Fprintf(f,"\n    },")
+    }
+    fmt.Fprintf(f, "\n}")
 }
