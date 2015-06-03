@@ -1,49 +1,150 @@
 package go3dm
 
-type Mesh struct {
-    Vertices []float32
-    Normals []float32
-    TextureCoords []float32
-    Objects []*MeshObject
+type Mesh interface {
+    Vertices() []float32
+    Normals() []float32
+    TextureCoords() []float32
+    Objects() []MeshObject
+    VTN() ([]float32, []float32, []float32)
 }
 
-func (m *Mesh) VTN() ([]float32, []float32, []float32) {
-    return m.Vertices, m.TextureCoords, m.Normals
+type BasicMesh struct {
+    vertices []float32
+    normals []float32
+    textureCoords []float32
+    objects []MeshObject
 }
 
-type MeshObject struct {
-    Name string
-    Offset int
-    Count int
-    MaterialRef string
-    Smooth bool
+func (m *BasicMesh) Vertices() []float32 {
+    return m.vertices
 }
 
-func (mo *MeshObject) VertexOffset() int32 {
-    return int32(mo.Offset / 3)
+func (m *BasicMesh) Normals() []float32 {
+    return m.normals
 }
 
-func (mo *MeshObject) VertexCount() int32 {
-    return int32(mo.Count / 3)
+func (m *BasicMesh) TextureCoords() []float32 {
+    return m.textureCoords
 }
 
-
-type Material struct {
-    Name string
-    Ka []float32
-    Kd []float32
-    Ks []float32
-    Ns float32
-    Tr float32
-    KaMapName string
-    KdMapName string
-    KsMapName string
+func (m *BasicMesh) Objects() []MeshObject {
+    return m.objects
 }
 
-func NewMaterial(name string) *Material {
-    mat := new(Material)
-    mat.Name = name
+func (m *BasicMesh) VTN() ([]float32, []float32, []float32) {
+    return m.vertices, m.textureCoords, m.normals
+}
+
+type MeshObject interface {
+    Name() string
+    Offset() int
+    Count() int
+    MaterialRef() string
+    Smooth() bool
+    VertexOffset() int32
+    VertexCount() int32
+}
+
+type BasicMeshObject struct {
+    name string
+    offset int
+    count int
+    materialRef string
+    smooth bool
+}
+
+func (mo *BasicMeshObject) Name() string {
+    return mo.name
+}
+
+func (mo *BasicMeshObject) Offset() int {
+    return mo.offset
+}
+
+func (mo *BasicMeshObject) Count() int {
+    return mo.count
+}
+
+func (mo *BasicMeshObject) MaterialRef() string {
+    return mo.materialRef
+}
+
+func (mo *BasicMeshObject) Smooth() bool {
+    return mo.smooth
+}
+
+func (mo *BasicMeshObject) VertexOffset() int32 {
+    return int32(mo.offset / 3)
+}
+
+func (mo *BasicMeshObject) VertexCount() int32 {
+    return int32(mo.count / 3)
+}
+
+type Material interface {
+    Name() string
+    Ka() []float32
+    Kd() []float32
+    Ks() []float32
+    Ns() float32
+    Tr() float32
+    KaMapName() string
+    KdMapName() string
+    KsMapName() string
+}
+
+type BasicMaterial struct {
+    name string
+    ka []float32
+    kd []float32
+    ks []float32
+    ns float32
+    tr float32
+    kaMapName string
+    kdMapName string
+    ksMapName string
+}
+
+func NewBasicMaterial(name string) Material {
+    mat := new(BasicMaterial)
+    mat.name = name
     return mat
+}
+
+func (m *BasicMaterial) Name() string {
+    return m.name
+}
+
+func (m *BasicMaterial) Ka() []float32 {
+    return m.ka
+}
+
+func (m *BasicMaterial) Kd() []float32 {
+    return m.kd
+}
+
+func (m *BasicMaterial) Ks() []float32 {
+    return m.ks
+}
+
+func (m *BasicMaterial) Ns() float32 {
+    return m.ns
+}
+
+func (m *BasicMaterial) Tr() float32 {
+    return m.tr
+}
+
+func (m *BasicMaterial) KaMapName() string {
+    return m.kaMapName
+}
+
+func (m *BasicMaterial) KdMapName() string {
+    return m.kdMapName
+}
+
+func (m *BasicMaterial) KsMapName() string {
+    return m.ksMapName
 }
 
 type f32VA struct {

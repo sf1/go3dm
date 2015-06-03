@@ -10,11 +10,11 @@ import (
     "path/filepath"
 )
 
-func LoadOBJ(objPath string) (*Mesh, map[string]*Material, error) {
+func LoadOBJ(objPath string) (Mesh, map[string]Material, error) {
     objPath, err := filepath.Abs(objPath)
     if err != nil { return nil, nil, err}
     absDir := filepath.Dir(objPath)
-    matMap := make(map[string]*Material)
+    matMap := make(map[string]Material)
     objFile, err := os.Open(objPath)
     if err != nil { return nil, nil, err}
     defer objFile.Close()
@@ -33,10 +33,10 @@ func LoadOBJ(objPath string) (*Mesh, map[string]*Material, error) {
         matList, err := LoadMTLFrom(mtlFile)
         if err != nil { return nil, nil, err}
         for _, mat := range matList {
-            matMap[mat.Name] = mat
+            matMap[mat.Name()] = mat
         }
     }
-    return &objMesh.Mesh, matMap, nil
+    return objMesh, matMap, nil
 }
 
 func LoadOBJFrom(reader io.Reader) (*OBJMesh, error) {
@@ -49,8 +49,8 @@ func LoadOBJFrom(reader io.Reader) (*OBJMesh, error) {
     normals := NewF32VA(3)
     texCoords := NewF32VA(3)
 
-    groups := make([]*MeshObject, 0, 1)
-    groups = append(groups, &MeshObject{"unkown", -1, -1, "", false})
+    groups := make([]*BasicMeshObject, 0, 1)
+    groups = append(groups, &BasicMeshObject{"unkown", -1, -1, "", false})
     mtllib := ""
 
     scanner := bufio.NewScanner(reader)
@@ -59,7 +59,8 @@ func LoadOBJFrom(reader io.Reader) (*OBJMesh, error) {
         tokens := strings.Split(line, " ")
         switch tokens[0] {
         case "g","o":
-            groups = append(groups, &MeshObject{tokens[1], -1, -1, "",false})
+            groups = append(groups,
+                &BasicMeshObject{tokens[1], -1, -1, "",false})
         case "v":
             err := parseAndAppendF32Tokens(tokens[1:], verticesTmp)
             if err != nil {return nil, err}
@@ -76,9 +77,9 @@ func LoadOBJFrom(reader io.Reader) (*OBJMesh, error) {
                     "Loader currently only supports triangular faces")
             }
             group := groups[len(groups)-1]
-            if group.Offset == -1 {
-                group.Offset = len(vertices.Values)
-                group.Count = 0
+            if group.offset == -1 {
+                group.offset = len(vertices.Values)
+                group.count = 0
             }
             for _, fidx := range face {
                 vIdx, tIdx, nIdx, err := parseFaceIndicies(fidx)
@@ -90,22 +91,22 @@ func LoadOBJFrom(reader io.Reader) (*OBJMesh, error) {
                 if tIdx > 0 {
                     texCoords.AppendVector(texTmp.GetVector(tIdx-1))
                 }
-                group.Count += 3
+                group.count += 3
             }
         case "s":
             group := groups[len(groups)-1]
-            group.Smooth = false
+            group.smooth = false
             if tokens[1] == "1" {
-                group.Smooth = true
+                group.smooth = true
             }
         case "mtllib":
             mtllib = strings.Join(tokens[1:]," ")
         case "usemtl":
-            groups[len(groups)-1].MaterialRef = strings.Join(tokens[1:]," ")
+            groups[len(groups)-1].materialRef = strings.Join(tokens[1:]," ")
         }
     }
 
-    if groups[0].Offset == -1 {
+    if groups[0].offset == -1 {
         groups = groups[1:]
     }
 
@@ -121,48 +122,53 @@ func LoadOBJFrom(reader io.Reader) (*OBJMesh, error) {
         texCoordsFA = texCoords.Values
     }
 
+    objs := make([]MeshObject, 0, len(groups))
+    for _, g := range groups {
+        objs = append(objs, g)
+    }
+
     return &OBJMesh{
-            Mesh{verticesFA, normalsFA, texCoordsFA, groups},
+            BasicMesh{verticesFA, normalsFA, texCoordsFA, objs},
             mtllib}, nil
 }
 
-func LoadMTLFrom(reader io.Reader) ([]*Material, error) {
+func LoadMTLFrom(reader io.Reader) ([]Material, error) {
     scanner := bufio.NewScanner(reader)
-    materials := make([]*Material, 0, 1)
+    materials := make([]Material, 0, 1)
+    var curMat *BasicMaterial = nil
     for scanner.Scan() {
         line := strings.TrimSpace(scanner.Text())
         tokens := strings.Split(line, " ")
         if tokens[0] == "newmtl" {
-            m := new(Material)
-            m.Name = strings.Join(tokens[1:]," ")
-            materials = append(materials, m)
+            curMat = new(BasicMaterial)
+            curMat.name = strings.Join(tokens[1:]," ")
+            materials = append(materials, curMat)
         } else if len(materials) > 0 {
             var err error
-            m := materials[len(materials)-1]
             switch tokens[0] {
             case "Ka":
-                m.Ka, err = parseF32Tokens(tokens[1:])
+                curMat.ka, err = parseF32Tokens(tokens[1:])
                 if err != nil {return nil, err}
             case "Kd":
-                m.Kd, err = parseF32Tokens(tokens[1:])
+                curMat.kd, err = parseF32Tokens(tokens[1:])
                 if err != nil {return nil, err}
             case "Ks":
-                m.Ks, err = parseF32Tokens(tokens[1:])
+                curMat.ks, err = parseF32Tokens(tokens[1:])
                 if err != nil {return nil, err}
             case "Ns":
                 val, err := parseF32Tokens(tokens[1:])
                 if err != nil {return nil, err}
-                m.Ns = val[0]
+                curMat.ns = val[0]
             case "d","Tr":
                 val, err := parseF32Tokens(tokens[1:])
                 if err != nil {return nil, err}
-                m.Tr = val[0]
+                curMat.tr = val[0]
             case "map_Ka":
-                m.KaMapName = strings.Join(tokens[1:]," ")
+                curMat.kaMapName = strings.Join(tokens[1:]," ")
             case "map_Kd":
-                m.KdMapName = strings.Join(tokens[1:]," ")
+                curMat.kdMapName = strings.Join(tokens[1:]," ")
             case "map_Ks":
-                m.KsMapName = strings.Join(tokens[1:]," ")
+                curMat.ksMapName = strings.Join(tokens[1:]," ")
 
             }
         }
@@ -209,7 +215,7 @@ func parseFaceIndicies(fidx string) (int, int, int, error) {
 }
 
 type OBJMesh struct {
-    Mesh
+    BasicMesh
     MTLLib string
 }
 
