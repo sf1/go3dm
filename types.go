@@ -1,5 +1,7 @@
 package go3dm
 
+// Interfaces
+
 type Mesh interface {
     Vertices() []float32
     Normals() []float32
@@ -7,6 +9,30 @@ type Mesh interface {
     Objects() []MeshObject
     VTN() ([]float32, []float32, []float32)
 }
+
+type MeshObject interface {
+    Name() string
+    Offset() int
+    Count() int
+    MaterialRef() string
+    Smooth() bool
+    VertexOffset() int32
+    VertexCount() int32
+}
+
+type Material interface {
+    Name() string
+    Ka() []float32
+    Kd() []float32
+    Ks() []float32
+    Ns() float32
+    Tr() float32
+    KaMapName() string
+    KdMapName() string
+    KsMapName() string
+}
+
+// Public Structs
 
 type BasicMesh struct {
     vertices []float32
@@ -33,16 +59,6 @@ func (m *BasicMesh) Objects() []MeshObject {
 
 func (m *BasicMesh) VTN() ([]float32, []float32, []float32) {
     return m.vertices, m.textureCoords, m.normals
-}
-
-type MeshObject interface {
-    Name() string
-    Offset() int
-    Count() int
-    MaterialRef() string
-    Smooth() bool
-    VertexOffset() int32
-    VertexCount() int32
 }
 
 type BasicMeshObject struct {
@@ -79,18 +95,6 @@ func (mo *BasicMeshObject) VertexOffset() int32 {
 
 func (mo *BasicMeshObject) VertexCount() int32 {
     return int32(mo.count / 3)
-}
-
-type Material interface {
-    Name() string
-    Ka() []float32
-    Kd() []float32
-    Ks() []float32
-    Ns() float32
-    Tr() float32
-    KaMapName() string
-    KdMapName() string
-    KsMapName() string
 }
 
 type BasicMaterial struct {
@@ -146,6 +150,8 @@ func (m *BasicMaterial) KdMapName() string {
 func (m *BasicMaterial) KsMapName() string {
     return m.ksMapName
 }
+
+// Internal Structs
 
 type f32VA struct {
     Values []float32
