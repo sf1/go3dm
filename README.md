@@ -24,5 +24,5 @@ go get github.com/sf1/go3dm/obj2go
 ```
 mesh, materials, err := go3dm.LoadOBJ("al.obj")
 if err != nil { panic(err) }
-// ...
+...
 ```
