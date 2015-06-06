@@ -81,35 +81,35 @@ func TestLoadCubesMTL(t *testing.T) {
     if len(materials) != 2 {
         t.Error("Expected 2 materials")
     }
-    if materials[0].Name() != "blueCube" {
+    if materials[0].Name != "blueCube" {
         t.Error("Expected blueCube material")
     }
-    if materials[0].Ns() != 96.078431 {
+    if materials[0].Ns != 96.078431 {
         t.Error("Wrong Ns value")
     }
-    if materials[0].Ka()[2] != 0.0{
+    if materials[0].Ka[2] != 0.0{
         t.Error("Wrong Ka value")
     }
-    if materials[0].Kd()[2] != 0.64{
+    if materials[0].Kd[2] != 0.64{
         t.Error("Wrong Kd value")
     }
-    if materials[0].Ks()[1] != 0.5{
+    if materials[0].Ks[1] != 0.5{
         t.Error("Wrong Ks value")
     }
 
-    if materials[1].Name() != "redCube" {
+    if materials[1].Name != "redCube" {
         t.Error("Expected redCube material")
     }
-    if materials[1].Ns() != 96.078431 {
+    if materials[1].Ns != 96.078431 {
         t.Error("Wrong Ns value")
     }
-    if materials[1].Ka()[2] != 0.0{
+    if materials[1].Ka[2] != 0.0{
         t.Error("Wrong Ka value")
     }
-    if materials[1].Kd()[0] != 0.64{
+    if materials[1].Kd[0] != 0.64{
         t.Error("Wrong Kd value")
     }
-    if materials[1].Ks()[2] != 0.5{
+    if materials[1].Ks[2] != 0.5{
         t.Error("Wrong Ks value")
     }
 }
@@ -127,7 +127,7 @@ func TestLoadOBJ(t *testing.T) {
 }
 */
 
-func printMesh(mesh Mesh) {
+func printMesh(mesh *TriangleMesh) {
     vertices, texcoords, normals := mesh.VTN()
     fmt.Println("\nVertices:")
     for idx, v := range vertices {
@@ -145,16 +145,16 @@ func printMesh(mesh Mesh) {
         }
     }
     fmt.Println("\n\nElements")
-    for idx, e := range mesh.Elements() {
+    for idx, e := range mesh.Indicies {
         if idx % 3 == 0 { fmt.Println("") } else { fmt.Print(", ") }
         fmt.Printf("%d", e)
     }
     fmt.Println("\n\nObjects")
-    for _, mo := range mesh.Objects() {
-        fmt.Printf("------------\n%s\n------------\n", mo.Name())
-        fmt.Printf("Material: %s\n", mo.MaterialRef())
-        fmt.Printf("Smooth: %t\n", mo.Smooth())
-        fmt.Printf("Offset: %d\n", mo.ElementOffset())
-        fmt.Printf("Count: %d\n", mo.ElementCount())
+    for _, mo := range mesh.Objects {
+        fmt.Printf("------------\n%s\n------------\n", mo.Name)
+        fmt.Printf("Material: %s\n", mo.MaterialRef)
+        fmt.Printf("Smooth: %t\n", mo.Smooth)
+        fmt.Printf("Offset: %d\n", mo.IndexOffset)
+        fmt.Printf("Count: %d\n", mo.IndexCount)
     }
 }

@@ -10,11 +10,11 @@ import (
     "path/filepath"
 )
 
-func LoadOBJ(objPath string) (TriangleMesh, map[string]Material, error) {
+func LoadOBJ(objPath string) (*TriangleMesh, map[string]*Material, error) {
     objPath, err := filepath.Abs(objPath)
     if err != nil { return nil, nil, err}
     absDir := filepath.Dir(objPath)
-    matMap := make(map[string]Material)
+    matMap := make(map[string]*Material)
     objFile, err := os.Open(objPath)
     if err != nil { return nil, nil, err}
     defer objFile.Close()
@@ -34,10 +34,10 @@ func LoadOBJ(objPath string) (TriangleMesh, map[string]Material, error) {
         matList, err := LoadMTLFrom(mtlFile)
         if err != nil { return nil, nil, err}
         for _, mat := range matList {
-            matMap[mat.Name()] = mat
+            matMap[mat.Name] = mat
         }
     }
-    return objMesh, matMap, nil
+    return &objMesh.TriangleMesh, matMap, nil
 }
 
 func LoadOBJFrom(reader io.Reader) (*OBJMesh, error) {
@@ -52,9 +52,9 @@ func LoadOBJFrom(reader io.Reader) (*OBJMesh, error) {
     texCoords := NewF32VA(3)
     elements := make([]uint32, 0, 10)
 
-    meshObjects := make([]*BasicMeshObject, 0, 1)
+    meshObjects := make([]*MeshObject, 0, 1)
     meshObjects = append(meshObjects,
-        &BasicMeshObject{"unkown", -1, -1, "", false})
+        &MeshObject{"unkown", -1, -1, "", false})
     mtllib := ""
 
     scanner := bufio.NewScanner(reader)
@@ -64,7 +64,7 @@ func LoadOBJFrom(reader io.Reader) (*OBJMesh, error) {
         switch tokens[0] {
         case "g","o":
             meshObjects = append(meshObjects,
-                &BasicMeshObject{tokens[1], -1, -1, "",false})
+                &MeshObject{tokens[1], -1, -1, "",false})
         case "v":
             err := parseAndAppendF32Tokens(tokens[1:], verticesTmp)
             if err != nil {return nil, err}
@@ -81,12 +81,12 @@ func LoadOBJFrom(reader io.Reader) (*OBJMesh, error) {
                     "Loader currently only supports triangle faces")
             }
             mo := meshObjects[len(meshObjects)-1]
-            if mo.indexOffset == -1 {
-                mo.indexOffset = len(elements)
-                mo.indexCount = 0
+            if mo.IndexOffset == -1 {
+                mo.IndexOffset = len(elements)
+                mo.IndexCount = 0
             }
             for _, fidx := range faceIndicies {
-                mo.indexCount++
+                mo.IndexCount++
                 vtnIdx, ok := vtnMap[fidx]
                 if ok {
                     elements = append(elements, vtnIdx)
@@ -107,19 +107,19 @@ func LoadOBJFrom(reader io.Reader) (*OBJMesh, error) {
             }
         case "s":
             mo := meshObjects[len(meshObjects)-1]
-            mo.smooth = false
+            mo.Smooth = false
             if tokens[1] == "1" {
-                mo.smooth = true
+                mo.Smooth = true
             }
         case "mtllib":
             mtllib = strings.Join(tokens[1:]," ")
         case "usemtl":
-            meshObjects[len(meshObjects)-1].materialRef = strings.Join(
+            meshObjects[len(meshObjects)-1].MaterialRef = strings.Join(
                 tokens[1:]," ")
         }
     }
 
-    if meshObjects[0].indexOffset == -1 {
+    if meshObjects[0].IndexOffset == -1 {
         meshObjects = meshObjects[1:]
     }
 
@@ -135,13 +135,13 @@ func LoadOBJFrom(reader io.Reader) (*OBJMesh, error) {
         texCoordsFA = texCoords.Values
     }
 
-    objs := make([]MeshObject, 0, len(meshObjects))
+    objs := make([]*MeshObject, 0, len(meshObjects))
     for _, mo := range meshObjects {
         objs = append(objs, mo)
     }
 
     return &OBJMesh{
-            BasicTriangleMesh{
+            TriangleMesh{
                 verticesFA,
                 normalsFA,
                 texCoordsFA,
@@ -150,44 +150,43 @@ func LoadOBJFrom(reader io.Reader) (*OBJMesh, error) {
             mtllib}, nil
 }
 
-func LoadMTLFrom(reader io.Reader) ([]Material, error) {
+func LoadMTLFrom(reader io.Reader) ([]*Material, error) {
     scanner := bufio.NewScanner(reader)
-    materials := make([]Material, 0, 1)
-    var curMat *BasicMaterial = nil
+    materials := make([]*Material, 0, 1)
+    var curMat *Material= nil
     for scanner.Scan() {
         line := strings.TrimSpace(scanner.Text())
         tokens := strings.Split(line, " ")
         if tokens[0] == "newmtl" {
-            curMat = new(BasicMaterial)
-            curMat.name = strings.Join(tokens[1:]," ")
+            curMat = new(Material)
+            curMat.Name = strings.Join(tokens[1:]," ")
             materials = append(materials, curMat)
         } else if len(materials) > 0 {
             var err error
             switch tokens[0] {
             case "Ka":
-                curMat.ka, err = parseF32Tokens(tokens[1:])
+                curMat.Ka, err = parseF32Tokens(tokens[1:])
                 if err != nil {return nil, err}
             case "Kd":
-                curMat.kd, err = parseF32Tokens(tokens[1:])
+                curMat.Kd, err = parseF32Tokens(tokens[1:])
                 if err != nil {return nil, err}
             case "Ks":
-                curMat.ks, err = parseF32Tokens(tokens[1:])
+                curMat.Ks, err = parseF32Tokens(tokens[1:])
                 if err != nil {return nil, err}
             case "Ns":
                 val, err := parseF32Tokens(tokens[1:])
                 if err != nil {return nil, err}
-                curMat.ns = val[0]
+                curMat.Ns = val[0]
             case "d","Tr":
                 val, err := parseF32Tokens(tokens[1:])
                 if err != nil {return nil, err}
-                curMat.tr = val[0]
+                curMat.Tr = val[0]
             case "map_Ka":
-                curMat.kaMapName = strings.Join(tokens[1:]," ")
+                curMat.KaMapName = strings.Join(tokens[1:]," ")
             case "map_Kd":
-                curMat.kdMapName = strings.Join(tokens[1:]," ")
+                curMat.KdMapName = strings.Join(tokens[1:]," ")
             case "map_Ks":
-                curMat.ksMapName = strings.Join(tokens[1:]," ")
-
+                curMat.KsMapName = strings.Join(tokens[1:]," ")
             }
         }
     }
@@ -233,7 +232,7 @@ func parseFaceIndicies(fidx string) (int, int, int, error) {
 }
 
 type OBJMesh struct {
-    BasicTriangleMesh
+    TriangleMesh
     MTLLib string
 }
 
