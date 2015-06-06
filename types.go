@@ -6,6 +6,7 @@ type Mesh interface {
     Vertices() []float32
     Normals() []float32
     TextureCoords() []float32
+    Elements() []uint32
     Objects() []MeshObject
     VTN() ([]float32, []float32, []float32)
 }
@@ -38,6 +39,7 @@ type BasicMesh struct {
     vertices []float32
     normals []float32
     textureCoords []float32
+    elements []uint32
     objects []MeshObject
 }
 
@@ -51,6 +53,10 @@ func (m *BasicMesh) Normals() []float32 {
 
 func (m *BasicMesh) TextureCoords() []float32 {
     return m.textureCoords
+}
+
+func (m *BasicMesh) Elements() []uint32 {
+    return m.elements
 }
 
 func (m *BasicMesh) Objects() []MeshObject {

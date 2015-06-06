@@ -44,10 +44,13 @@ func LoadOBJFrom(reader io.Reader) (*OBJMesh, error) {
     verticesTmp := NewF32VA(3)
     normalsTmp := NewF32VA(3)
     texTmp := NewF32VA(2)
+    vtnMap := make(map[string]uint32)
     // Arrays for holding processed data
     vertices := NewF32VA(3)
     normals := NewF32VA(3)
     texCoords := NewF32VA(3)
+    elements := make([]uint32, 0, 10)
+    //faces := make([][]uint32, 0, 10)
 
     groups := make([]*BasicMeshObject, 0, 1)
     groups = append(groups, &BasicMeshObject{"unkown", -1, -1, "", false})
@@ -71,8 +74,8 @@ func LoadOBJFrom(reader io.Reader) (*OBJMesh, error) {
             err := parseAndAppendF32Tokens(tokens[1:], texTmp)
             if err != nil {return nil, err}
         case "f":
-            face := tokens[1:]
-            if len(face) != 3 {
+            faceStr := tokens[1:]
+            if len(faceStr) != 3 {
                 return nil, fmt.Errorf(
                     "Loader currently only supports triangular faces")
             }
@@ -81,7 +84,14 @@ func LoadOBJFrom(reader io.Reader) (*OBJMesh, error) {
                 group.offset = len(vertices.Values)
                 group.count = 0
             }
-            for _, fidx := range face {
+            //elementIdx := len(elements)
+            for _, fidx := range faceStr {
+                vtnIdx, ok := vtnMap[fidx]
+                if ok {
+                    elements = append(elements, vtnIdx)
+                    continue
+                }
+                vtnIdx = uint32(vertices.VectorCount())
                 vIdx, tIdx, nIdx, err := parseFaceIndicies(fidx)
                 if err != nil {return nil, err}
                 vertices.AppendVector(verticesTmp.GetVector(vIdx-1))
@@ -91,8 +101,11 @@ func LoadOBJFrom(reader io.Reader) (*OBJMesh, error) {
                 if tIdx > 0 {
                     texCoords.AppendVector(texTmp.GetVector(tIdx-1))
                 }
+                vtnMap[fidx] = vtnIdx
+                elements = append(elements, vtnIdx)
                 group.count += 3
             }
+            //faces = append(faces, elements[elementIdx:])
         case "s":
             group := groups[len(groups)-1]
             group.smooth = false
@@ -128,7 +141,7 @@ func LoadOBJFrom(reader io.Reader) (*OBJMesh, error) {
     }
 
     return &OBJMesh{
-            BasicMesh{verticesFA, normalsFA, texCoordsFA, objs},
+            BasicMesh{verticesFA, normalsFA, texCoordsFA, elements, objs},
             mtllib}, nil
 }
 

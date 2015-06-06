@@ -300,6 +300,17 @@ var cubesMeshNormals = []float32 {
     0.000000, 0.000000, -1.000000, // n14
 }
 
+func TestChanges(t *testing.T) {
+    t.Log("Testing recent changes")
+    r := strings.NewReader(squareMeshOBJ)
+    mesh, err := LoadOBJFrom(r)
+    if err != nil {
+        t.Error(err)
+    }
+    printMesh(mesh)
+}
+
+/*
 func TestLoadSquareMesh(t *testing.T) {
     t.Log("Testing LoadOBJFrom with square mesh")
     testLoadOBJFrom(t, squareMeshOBJ,
@@ -430,17 +441,31 @@ func testLoadOBJFrom(t *testing.T, meshStr string,
     }
     //printMesh(mesh)
 }
+*/
 
 func printMesh(mesh Mesh) {
     vertices, texcoords, normals := mesh.VTN()
-    fmt.Println("Vertices:\n", vertices)
+    fmt.Println("\nVertices:")
+    for idx, v := range vertices {
+        if idx % 3 == 0 { fmt.Println("") } else { fmt.Print(", ") }
+        fmt.Printf("%f", v)
+    }
     if texcoords != nil {
-        fmt.Println("Texture Coordinates:\n", normals)
+        fmt.Println("\n\nTexture Coordinates:\n", normals)
     }
     if normals != nil {
-        fmt.Println("Normals:\n", normals)
+        fmt.Println("\n\nNormals:")
+        for idx, n := range normals {
+            if idx % 3 == 0 { fmt.Println("") } else { fmt.Print(", ") }
+            fmt.Printf("%f", n)
+        }
     }
-    fmt.Println("Objects")
+    fmt.Println("\n\nElements")
+    for idx, e := range mesh.Elements() {
+        if idx % 3 == 0 { fmt.Println("") } else { fmt.Print(", ") }
+        fmt.Printf("%d", e)
+    }
+    fmt.Println("\n\nObjects")
     for _, g := range mesh.Objects() {
         fmt.Printf("------------\n%s\n------------\n", g.Name)
         fmt.Printf("Material: %s\n", g.MaterialRef)
