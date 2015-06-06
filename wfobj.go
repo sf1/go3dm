@@ -10,7 +10,7 @@ import (
     "path/filepath"
 )
 
-func LoadOBJ(objPath string) (Mesh, map[string]Material, error) {
+func LoadOBJ(objPath string) (TriangleMesh, map[string]Material, error) {
     objPath, err := filepath.Abs(objPath)
     if err != nil { return nil, nil, err}
     absDir := filepath.Dir(objPath)
@@ -51,7 +51,6 @@ func LoadOBJFrom(reader io.Reader) (*OBJMesh, error) {
     normals := NewF32VA(3)
     texCoords := NewF32VA(3)
     elements := make([]uint32, 0, 10)
-    //faces := make([][]uint32, 0, 10)
 
     meshObjects := make([]*BasicMeshObject, 0, 1)
     meshObjects = append(meshObjects,
@@ -76,19 +75,18 @@ func LoadOBJFrom(reader io.Reader) (*OBJMesh, error) {
             err := parseAndAppendF32Tokens(tokens[1:], texTmp)
             if err != nil {return nil, err}
         case "f":
-            faceStr := tokens[1:]
-            if len(faceStr) != 3 {
+            faceIndicies := tokens[1:]
+            if len(faceIndicies) != 3 {
                 return nil, fmt.Errorf(
-                    "Loader currently only supports triangular faces")
+                    "Loader currently only supports triangle faces")
             }
             mo := meshObjects[len(meshObjects)-1]
-            if mo.elementOffset == -1 {
-                mo.elementOffset = len(elements)
-                mo.elementCount = 0
+            if mo.indexOffset == -1 {
+                mo.indexOffset = len(elements)
+                mo.indexCount = 0
             }
-            //elementIdx := len(elements)
-            for _, fidx := range faceStr {
-                mo.elementCount++
+            for _, fidx := range faceIndicies {
+                mo.indexCount++
                 vtnIdx, ok := vtnMap[fidx]
                 if ok {
                     elements = append(elements, vtnIdx)
@@ -107,7 +105,6 @@ func LoadOBJFrom(reader io.Reader) (*OBJMesh, error) {
                 vtnMap[fidx] = vtnIdx
                 elements = append(elements, vtnIdx)
             }
-            //faces = append(faces, elements[elementIdx:])
         case "s":
             mo := meshObjects[len(meshObjects)-1]
             mo.smooth = false
@@ -122,7 +119,7 @@ func LoadOBJFrom(reader io.Reader) (*OBJMesh, error) {
         }
     }
 
-    if meshObjects[0].elementOffset == -1 {
+    if meshObjects[0].indexOffset == -1 {
         meshObjects = meshObjects[1:]
     }
 
@@ -144,7 +141,12 @@ func LoadOBJFrom(reader io.Reader) (*OBJMesh, error) {
     }
 
     return &OBJMesh{
-            BasicMesh{verticesFA, normalsFA, texCoordsFA, elements, objs},
+            BasicTriangleMesh{
+                verticesFA,
+                normalsFA,
+                texCoordsFA,
+                elements,
+                objs},
             mtllib}, nil
 }
 
@@ -231,7 +233,7 @@ func parseFaceIndicies(fidx string) (int, int, int, error) {
 }
 
 type OBJMesh struct {
-    BasicMesh
+    BasicTriangleMesh
     MTLLib string
 }
 

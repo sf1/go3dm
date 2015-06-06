@@ -2,19 +2,19 @@ package go3dm
 
 // Interfaces
 
-type Mesh interface {
+type TriangleMesh interface {
     Vertices() []float32
     Normals() []float32
     TextureCoords() []float32
-    Elements() []uint32
+    Indicies() []uint32
     Objects() []MeshObject
     VTN() ([]float32, []float32, []float32)
 }
 
 type MeshObject interface {
     Name() string
-    ElementOffset() int32
-    ElementCount() int32
+    IndexOffset() int32
+    IndexCount() int32
     MaterialRef() string
     Smooth() bool
 }
@@ -33,42 +33,42 @@ type Material interface {
 
 // Public Structs
 
-type BasicMesh struct {
+type BasicTriangleMesh struct {
     vertices []float32
     normals []float32
     textureCoords []float32
-    elements []uint32
+    indicies []uint32
     objects []MeshObject
 }
 
-func (m *BasicMesh) Vertices() []float32 {
+func (m *BasicTriangleMesh) Vertices() []float32 {
     return m.vertices
 }
 
-func (m *BasicMesh) Normals() []float32 {
+func (m *BasicTriangleMesh) Normals() []float32 {
     return m.normals
 }
 
-func (m *BasicMesh) TextureCoords() []float32 {
+func (m *BasicTriangleMesh) TextureCoords() []float32 {
     return m.textureCoords
 }
 
-func (m *BasicMesh) Elements() []uint32 {
-    return m.elements
+func (m *BasicTriangleMesh) Indicies() []uint32 {
+    return m.indicies
 }
 
-func (m *BasicMesh) Objects() []MeshObject {
+func (m *BasicTriangleMesh) Objects() []MeshObject {
     return m.objects
 }
 
-func (m *BasicMesh) VTN() ([]float32, []float32, []float32) {
+func (m *BasicTriangleMesh) VTN() ([]float32, []float32, []float32) {
     return m.vertices, m.textureCoords, m.normals
 }
 
 type BasicMeshObject struct {
     name string
-    elementOffset int
-    elementCount int
+    indexOffset int
+    indexCount int
     materialRef string
     smooth bool
 }
@@ -77,12 +77,12 @@ func (mo *BasicMeshObject) Name() string {
     return mo.name
 }
 
-func (mo *BasicMeshObject) ElementOffset() int32 {
-    return int32(mo.elementOffset)
+func (mo *BasicMeshObject) IndexOffset() int32 {
+    return int32(mo.indexOffset)
 }
 
-func (mo *BasicMeshObject) ElementCount() int32 {
-    return int32(mo.elementCount)
+func (mo *BasicMeshObject) IndexCount() int32 {
+    return int32(mo.indexCount)
 }
 
 func (mo *BasicMeshObject) MaterialRef() string {
