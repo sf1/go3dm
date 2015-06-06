@@ -33,6 +33,7 @@ type Material struct {
     KdMapName string
     KsMapName string
 }
+
 // Internal Structs
 
 type f32VA struct {
