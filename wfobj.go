@@ -27,7 +27,8 @@ func LoadOBJ(objPath string) (Mesh, map[string]Material, error) {
         }
         mtlFile, err := os.Open(mtlPath)
         if err != nil {
-            return nil, nil, fmt.Errorf("Can't open mtllib: %s", objMesh.MTLLib)
+            return nil, nil, fmt.Errorf(
+                "Can't open mtllib: %s", objMesh.MTLLib)
         }
         defer mtlFile.Close()
         matList, err := LoadMTLFrom(mtlFile)
@@ -52,8 +53,9 @@ func LoadOBJFrom(reader io.Reader) (*OBJMesh, error) {
     elements := make([]uint32, 0, 10)
     //faces := make([][]uint32, 0, 10)
 
-    groups := make([]*BasicMeshObject, 0, 1)
-    groups = append(groups, &BasicMeshObject{"unkown", -1, -1, "", false})
+    meshObjects := make([]*BasicMeshObject, 0, 1)
+    meshObjects = append(meshObjects,
+        &BasicMeshObject{"unkown", -1, -1, "", false})
     mtllib := ""
 
     scanner := bufio.NewScanner(reader)
@@ -62,7 +64,7 @@ func LoadOBJFrom(reader io.Reader) (*OBJMesh, error) {
         tokens := strings.Split(line, " ")
         switch tokens[0] {
         case "g","o":
-            groups = append(groups,
+            meshObjects = append(meshObjects,
                 &BasicMeshObject{tokens[1], -1, -1, "",false})
         case "v":
             err := parseAndAppendF32Tokens(tokens[1:], verticesTmp)
@@ -79,13 +81,14 @@ func LoadOBJFrom(reader io.Reader) (*OBJMesh, error) {
                 return nil, fmt.Errorf(
                     "Loader currently only supports triangular faces")
             }
-            group := groups[len(groups)-1]
-            if group.offset == -1 {
-                group.offset = len(vertices.Values)
-                group.count = 0
+            mo := meshObjects[len(meshObjects)-1]
+            if mo.elementOffset == -1 {
+                mo.elementOffset = len(elements)
+                mo.elementCount = 0
             }
             //elementIdx := len(elements)
             for _, fidx := range faceStr {
+                mo.elementCount++
                 vtnIdx, ok := vtnMap[fidx]
                 if ok {
                     elements = append(elements, vtnIdx)
@@ -103,24 +106,24 @@ func LoadOBJFrom(reader io.Reader) (*OBJMesh, error) {
                 }
                 vtnMap[fidx] = vtnIdx
                 elements = append(elements, vtnIdx)
-                group.count += 3
             }
             //faces = append(faces, elements[elementIdx:])
         case "s":
-            group := groups[len(groups)-1]
-            group.smooth = false
+            mo := meshObjects[len(meshObjects)-1]
+            mo.smooth = false
             if tokens[1] == "1" {
-                group.smooth = true
+                mo.smooth = true
             }
         case "mtllib":
             mtllib = strings.Join(tokens[1:]," ")
         case "usemtl":
-            groups[len(groups)-1].materialRef = strings.Join(tokens[1:]," ")
+            meshObjects[len(meshObjects)-1].materialRef = strings.Join(
+                tokens[1:]," ")
         }
     }
 
-    if groups[0].offset == -1 {
-        groups = groups[1:]
+    if meshObjects[0].elementOffset == -1 {
+        meshObjects = meshObjects[1:]
     }
 
     var verticesFA, normalsFA, texCoordsFA []float32 = nil, nil, nil
@@ -135,9 +138,9 @@ func LoadOBJFrom(reader io.Reader) (*OBJMesh, error) {
         texCoordsFA = texCoords.Values
     }
 
-    objs := make([]MeshObject, 0, len(groups))
-    for _, g := range groups {
-        objs = append(objs, g)
+    objs := make([]MeshObject, 0, len(meshObjects))
+    for _, mo := range meshObjects {
+        objs = append(objs, mo)
     }
 
     return &OBJMesh{

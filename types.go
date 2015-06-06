@@ -13,12 +13,10 @@ type Mesh interface {
 
 type MeshObject interface {
     Name() string
-    Offset() int
-    Count() int
+    ElementOffset() int32
+    ElementCount() int32
     MaterialRef() string
     Smooth() bool
-    VertexOffset() int32
-    VertexCount() int32
 }
 
 type Material interface {
@@ -69,8 +67,8 @@ func (m *BasicMesh) VTN() ([]float32, []float32, []float32) {
 
 type BasicMeshObject struct {
     name string
-    offset int
-    count int
+    elementOffset int
+    elementCount int
     materialRef string
     smooth bool
 }
@@ -79,12 +77,12 @@ func (mo *BasicMeshObject) Name() string {
     return mo.name
 }
 
-func (mo *BasicMeshObject) Offset() int {
-    return mo.offset
+func (mo *BasicMeshObject) ElementOffset() int32 {
+    return int32(mo.elementOffset)
 }
 
-func (mo *BasicMeshObject) Count() int {
-    return mo.count
+func (mo *BasicMeshObject) ElementCount() int32 {
+    return int32(mo.elementCount)
 }
 
 func (mo *BasicMeshObject) MaterialRef() string {
@@ -93,14 +91,6 @@ func (mo *BasicMeshObject) MaterialRef() string {
 
 func (mo *BasicMeshObject) Smooth() bool {
     return mo.smooth
-}
-
-func (mo *BasicMeshObject) VertexOffset() int32 {
-    return int32(mo.offset / 3)
-}
-
-func (mo *BasicMeshObject) VertexCount() int32 {
-    return int32(mo.count / 3)
 }
 
 type BasicMaterial struct {
