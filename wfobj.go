@@ -10,7 +10,8 @@ import (
     "path/filepath"
 )
 
-func LoadOBJ(objPath string) (*TriangleMesh, map[string]*Material, error) {
+func LoadOBJ(objPath string, index bool) (*TriangleMesh,
+    map[string]*Material, error) {
     objPath, err := filepath.Abs(objPath)
     if err != nil { return nil, nil, err}
     absDir := filepath.Dir(objPath)
@@ -18,7 +19,7 @@ func LoadOBJ(objPath string) (*TriangleMesh, map[string]*Material, error) {
     objFile, err := os.Open(objPath)
     if err != nil { return nil, nil, err}
     defer objFile.Close()
-    objMesh, err := LoadOBJFrom(objFile)
+    objMesh, err := LoadOBJFrom(objFile, index)
     if err != nil { return nil, nil, err}
     if objMesh.MTLLib != "" {
         mtlPath := objMesh.MTLLib
@@ -40,20 +41,31 @@ func LoadOBJ(objPath string) (*TriangleMesh, map[string]*Material, error) {
     return &objMesh.TriangleMesh, matMap, nil
 }
 
-func LoadOBJFrom(reader io.Reader) (*OBJMesh, error) {
-    // Arrays for holding original data
-    verticesTmp := NewF32VA(3)
-    normalsTmp := NewF32VA(3)
-    texTmp := NewF32VA(2)
-    vtnMap := make(map[string]uint32)
-    // Arrays for holding processed data
-    vertices := NewF32VA(3)
-    normals := NewF32VA(3)
-    texCoords := NewF32VA(3)
-    elements := make([]uint32, 0, 10)
+type OLState struct {
+    verticesTmp *f32VA
+    normalsTmp *f32VA
+    texTmp *f32VA
+    vtnMap map[string]uint32
+    vertices *f32VA
+    normals *f32VA
+    texCoords *f32VA
+    indicies []uint32
+    meshObjects []*MeshObject
+    index bool
+}
 
-    meshObjects := make([]*MeshObject, 0, 1)
-    meshObjects = append(meshObjects,
+func LoadOBJFrom(reader io.Reader, index bool) (*OBJMesh, error) {
+    // Set up state struct
+    state := &OLState {
+        NewF32VA(3), NewF32VA(3), NewF32VA(3),
+        make(map[string]uint32),
+        NewF32VA(3), NewF32VA(3), NewF32VA(3),
+        make([]uint32, 0, 10),
+        make([]*MeshObject, 0, 1),
+        index,
+    }
+
+    state.meshObjects = append(state.meshObjects,
         &MeshObject{"unkown", -1, -1, "", false})
     mtllib := ""
 
@@ -63,16 +75,16 @@ func LoadOBJFrom(reader io.Reader) (*OBJMesh, error) {
         tokens := strings.Split(line, " ")
         switch tokens[0] {
         case "g","o":
-            meshObjects = append(meshObjects,
+            state.meshObjects = append(state.meshObjects,
                 &MeshObject{tokens[1], -1, -1, "",false})
         case "v":
-            err := parseAndAppendF32Tokens(tokens[1:], verticesTmp)
+            err := parseAndAppendF32Tokens(tokens[1:], state.verticesTmp)
             if err != nil {return nil, err}
         case "vn":
-            err := parseAndAppendF32Tokens(tokens[1:], normalsTmp)
+            err := parseAndAppendF32Tokens(tokens[1:], state.normalsTmp)
             if err != nil {return nil, err}
         case "vt":
-            err := parseAndAppendF32Tokens(tokens[1:], texTmp)
+            err := parseAndAppendF32Tokens(tokens[1:], state.texTmp)
             if err != nil {return nil, err}
         case "f":
             faceIndicies := tokens[1:]
@@ -80,33 +92,10 @@ func LoadOBJFrom(reader io.Reader) (*OBJMesh, error) {
                 return nil, fmt.Errorf(
                     "Loader currently only supports triangle faces")
             }
-            mo := meshObjects[len(meshObjects)-1]
-            if mo.IndexOffset == -1 {
-                mo.IndexOffset = len(elements)
-                mo.IndexCount = 0
-            }
-            for _, fidx := range faceIndicies {
-                mo.IndexCount++
-                vtnIdx, ok := vtnMap[fidx]
-                if ok {
-                    elements = append(elements, vtnIdx)
-                    continue
-                }
-                vtnIdx = uint32(vertices.VectorCount())
-                vIdx, tIdx, nIdx, err := parseFaceIndicies(fidx)
-                if err != nil {return nil, err}
-                vertices.AppendVector(verticesTmp.GetVector(vIdx-1))
-                if nIdx > 0 {
-                    normals.AppendVector(normalsTmp.GetVector(nIdx-1))
-                }
-                if tIdx > 0 {
-                    texCoords.AppendVector(texTmp.GetVector(tIdx-1))
-                }
-                vtnMap[fidx] = vtnIdx
-                elements = append(elements, vtnIdx)
-            }
+            err := processFace(faceIndicies, state)
+            if err != nil { return nil, err }
         case "s":
-            mo := meshObjects[len(meshObjects)-1]
+            mo := state.meshObjects[len(state.meshObjects)-1]
             mo.Smooth = false
             if tokens[1] == "1" {
                 mo.Smooth = true
@@ -114,30 +103,28 @@ func LoadOBJFrom(reader io.Reader) (*OBJMesh, error) {
         case "mtllib":
             mtllib = strings.Join(tokens[1:]," ")
         case "usemtl":
-            meshObjects[len(meshObjects)-1].MaterialRef = strings.Join(
-                tokens[1:]," ")
+            state.meshObjects[len(state.meshObjects)-1].MaterialRef =
+                strings.Join(tokens[1:]," ")
         }
     }
 
-    if meshObjects[0].IndexOffset == -1 {
-        meshObjects = meshObjects[1:]
+    if state.meshObjects[0].IndexOffset == -1 {
+        state.meshObjects = state.meshObjects[1:]
     }
 
     var verticesFA, normalsFA, texCoordsFA []float32 = nil, nil, nil
 
-    if len(vertices.Values) > 0 {
-        verticesFA = vertices.Values
+    if len(state.vertices.Values) > 0 {
+        verticesFA = state.vertices.Values
     }
-    if len(normals.Values) > 0 {
-        normalsFA = normals.Values
+    if len(state.normals.Values) > 0 {
+        normalsFA = state.normals.Values
     }
-    if len(texCoords.Values) > 0 {
-        texCoordsFA = texCoords.Values
+    if len(state.texCoords.Values) > 0 {
+        texCoordsFA = state.texCoords.Values
     }
-
-    objs := make([]*MeshObject, 0, len(meshObjects))
-    for _, mo := range meshObjects {
-        objs = append(objs, mo)
+    if len(state.indicies) == 0 {
+        state.indicies = nil
     }
 
     return &OBJMesh{
@@ -145,9 +132,69 @@ func LoadOBJFrom(reader io.Reader) (*OBJMesh, error) {
                 verticesFA,
                 normalsFA,
                 texCoordsFA,
-                elements,
-                objs},
+                state.indicies,
+                state.meshObjects},
             mtllib}, nil
+}
+
+func processFace(faceIndicies []string, state *OLState) error {
+    mo := state.meshObjects[len(state.meshObjects)-1]
+    if mo.IndexOffset == -1 {
+        if state.index {
+            mo.IndexOffset = int32(len(state.indicies))
+        } else {
+            mo.IndexOffset = int32(len(state.vertices.Values) / 3)
+        }
+        mo.IndexCount = 0
+    }
+    for _, fidx := range faceIndicies {
+        vtnIdx, ok := state.vtnMap[fidx]
+        if state.index {
+            if ok {
+                state.indicies = append(state.indicies, vtnIdx)
+                mo.IndexCount++
+                continue
+            }
+            vtnIdx = uint32(state.vertices.VectorCount())
+        }
+        vIdx, tIdx, nIdx, err := parseFaceIndicies(fidx)
+        if err != nil {return err}
+        state.vertices.AppendVector(
+            state.verticesTmp.GetVector(vIdx-1))
+        if nIdx > 0 {
+            state.normals.AppendVector(
+                state.normalsTmp.GetVector(nIdx-1))
+        }
+        if tIdx > 0 {
+            state.texCoords.AppendVector(
+                state.texTmp.GetVector(tIdx-1))
+        }
+        if state.index {
+            state.vtnMap[fidx] = vtnIdx
+            state.indicies = append(state.indicies, vtnIdx)
+        }
+        mo.IndexCount++
+    }
+    return nil
+}
+
+func parseFaceIndicies(fidx string) (int, int, int, error) {
+   var vIdx, tIdx, nIdx int = 0,0,0
+    parts := strings.Split(fidx,"/")
+    if len(parts[0]) < 1 { return 0,0,0,fmt.Errorf("Parse error: %s", fidx) }
+    val, err := strconv.ParseUint(parts[0], 10, 32)
+    if err != nil {return 0,0,0,err}
+    vIdx = int(val)
+    if len(parts) == 1 { return vIdx,0,0,nil }
+    if len(parts) != 3 { return 0,0,0,fmt.Errorf("Parse error: %s", fidx) }
+    if len(parts[1]) < 1 {
+        tIdx = 0
+    }
+    if len(parts[2]) < 1 { return 0,0,0,fmt.Errorf("Parse error: %s", fidx) }
+    val, err = strconv.ParseUint(parts[2], 10, 32)
+    if err != nil {return 0,0,0,err}
+    nIdx = int(val)
+    return vIdx, tIdx, nIdx, nil
 }
 
 func LoadMTLFrom(reader io.Reader) ([]*Material, error) {
@@ -210,25 +257,6 @@ func parseF32Tokens(tokens []string) ([]float32, error) {
         result = append(result, float32(v))
     }
     return result, nil
-}
-
-func parseFaceIndicies(fidx string) (int, int, int, error) {
-   var vIdx, tIdx, nIdx int = 0,0,0
-    parts := strings.Split(fidx,"/")
-    if len(parts[0]) < 1 { return 0,0,0,fmt.Errorf("Parse error: %s", fidx) }
-    val, err := strconv.ParseUint(parts[0], 10, 32)
-    if err != nil {return 0,0,0,err}
-    vIdx = int(val)
-    if len(parts) == 1 { return vIdx,0,0,nil }
-    if len(parts) != 3 { return 0,0,0,fmt.Errorf("Parse error: %s", fidx) }
-    if len(parts[1]) < 1 {
-        tIdx = 0
-    }
-    if len(parts[2]) < 1 { return 0,0,0,fmt.Errorf("Parse error: %s", fidx) }
-    val, err = strconv.ParseUint(parts[2], 10, 32)
-    if err != nil {return 0,0,0,err}
-    nIdx = int(val)
-    return vIdx, tIdx, nIdx, nil
 }
 
 type OBJMesh struct {

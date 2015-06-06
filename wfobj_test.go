@@ -6,27 +6,43 @@ import (
     "strings"
 )
 
-func TestLoadSquareMesh(t *testing.T) {
-    t.Log("Testing: Square Mesh")
-    testLoadOBJFrom(t, squareMeshOBJ, squareMeshVertices, nil,
-                    squareMeshNormals, squareMeshElements)
+func TestLoadSquareMeshIndexed(t *testing.T) {
+    t.Log("Testing: Square Mesh (Indexed)")
+    testLoadOBJFrom(t, squareMeshOBJ,
+                    squareMeshIndexedVertices,
+                    nil,
+                    squareMeshIndexedNormals,
+                    squareMeshIndicies,
+                    true)
 }
 
 func TestLoadCubesMesh(t *testing.T) {
     t.Log("Testing: Cubes Mesh")
-    testLoadOBJFrom(t, cubesMeshOBJ, cubesMeshVertices, nil, cubesMeshNormals,
-                    cubesMeshElements)
+    testLoadOBJFrom(t, cubesMeshOBJ,
+                    cubesMeshVertices,
+                    nil,
+                    cubesMeshNormals,
+                    nil,
+                    false)
+}
+
+func TestLoadCubesMeshIndexed(t *testing.T) {
+    t.Log("Testing: Cubes Mesh (Indexed)")
+    testLoadOBJFrom(t, cubesMeshOBJ,
+                    cubesMeshIndexedVertices,
+                    nil,
+                    cubesMeshIndexedNormals,
+                    cubesMeshIndicies,
+                    true)
 }
 
 func testLoadOBJFrom(t *testing.T, meshStr string, expectedVertices []float32,
                     expectedTexCoords []float32, expectedNormals []float32,
-                    expectedElements []uint32) {
+                    expectedIndicies []uint32, index bool) {
     var i int
     r := strings.NewReader(meshStr)
-    mesh, err := LoadOBJFrom(r)
-    if err != nil {
-        t.Error(err)
-    }
+    mesh, err := LoadOBJFrom(r, index)
+    if err != nil { t.Error(err) }
     vertices, texcoords, normals := mesh.VTN()
     if vertices == nil {
         t.Error("Didn't load any vertices")
@@ -66,11 +82,26 @@ func testLoadOBJFrom(t *testing.T, meshStr string, expectedVertices []float32,
             }
             for i = 0; i < len(normals); i++ {
                 if texcoords[i] != expectedTexCoords[i] {
-                    t.Errorf("Unexpected textrue data at index %d", i)
+                    t.Errorf("Unexpected texture data at index %d", i)
                 }
             }
         }
     }
+    if expectedIndicies != nil {
+        if mesh.Indicies == nil {
+            t.Error("Didn't expect any indicies")
+        }
+        if len(expectedIndicies) != len(mesh.Indicies) {
+            t.Error("Unexpected number of indicies")
+        }
+        for i = 0; i < len(expectedIndicies); i++ {
+            if expectedIndicies[i] != mesh.Indicies[i] {
+                t.Errorf("Unexpected index at %d", i)
+            }
+        }
+    }
+    // TO DO:
+    // Test if MeshObjects are generated correctly!!!!
 }
 
 func TestLoadCubesMTL(t *testing.T) {
@@ -113,19 +144,6 @@ func TestLoadCubesMTL(t *testing.T) {
         t.Error("Wrong Ks value")
     }
 }
-
-/*
-
-func TestLoadOBJ(t *testing.T) {
-    t.Log("Testing LoadOBJ with cubes mesh")
-    mesh, materials, err := LoadOBJ("test-meshes/cubes.obj")
-    if err != nil { t.Error(err) }
-    fmt.Println(mesh)
-    for _, mat := range materials {
-        fmt.Println(mat)
-    }
-}
-*/
 
 func printMesh(mesh *TriangleMesh) {
     vertices, texcoords, normals := mesh.VTN()

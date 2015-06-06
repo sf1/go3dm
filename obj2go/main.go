@@ -36,8 +36,8 @@ func (m *TriangleMesh) VTN() ([]float32, []float32, []float32) {
 
 type MeshObject struct {
     Name string
-    IndexOffset int
-    IndexCount int
+    IndexOffset int32
+    IndexCount int32
     MaterialRef string
     Smooth bool
 }
@@ -57,7 +57,9 @@ type Material struct {
 
 func main() {
     var pkg string
+    var index bool
     flag.StringVar(&pkg, "package", "", "Package name")
+    flag.BoolVar(&index, "index", false, "Generate vertex index")
     flag.Usage = func() {
         fmt.Fprintf(os.Stderr, usage, os.Args[0])
         flag.PrintDefaults()
@@ -79,13 +81,13 @@ func main() {
         os.MkdirAll(pkg, 0755)
     }
     outFile := filepath.Join(pkg, filepath.Base(args[0]) + ".go")
-    mesh, materials, err := go3dm.LoadOBJ(args[0])
+    mesh, materials, err := go3dm.LoadOBJ(args[0], index)
     if err != nil { panic(err) }
     // Write types.go
     f, err := os.Create(filepath.Join(pkg, "types.go"))
     if err != nil { panic(err) }
     defer f.Close()
-    fmt.Fprintf(f, "package %s\n\n", pkg)
+    fmt.Fprintf(f, "package %s\n", pkg)
     fmt.Fprintf(f, types)
     // Create <modelname>.go
     f, err = os.Create(outFile)

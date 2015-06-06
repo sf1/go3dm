@@ -16,8 +16,8 @@ func (m *TriangleMesh) VTN() ([]float32, []float32, []float32) {
 
 type MeshObject struct {
     Name string
-    IndexOffset int
-    IndexCount int
+    IndexOffset int32
+    IndexCount int32
     MaterialRef string
     Smooth bool
 }
