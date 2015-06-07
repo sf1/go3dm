@@ -1,6 +1,6 @@
 package go3dm
 
-const squareMeshOBJ string = `
+const squareOBJ string = `
 mtllib square.mtl
 o square
 v -1.000000 0.000000 1.000000
@@ -14,7 +14,7 @@ f 2//1 4//1 3//1
 f 1//1 2//1 3//1
 `
 
-const simpleSquareMeshOBJ string = `
+const simpleSquareOBJ string = `
 mtllib square2.mtl
 o square
 v -1.000000 0.000000 1.000000
@@ -38,33 +38,33 @@ d 1.000000
 illum 2
 `
 
-var squareMeshIndexedVertices = []float32{
+var squareIndexedVertices = []float32{
     1.000000, 0.000000, 1.000000,
     1.000000, 0.000000, -1.000000,
     -1.000000, 0.000000, -1.000000,
     -1.000000, 0.000000, 1.000000,
 }
 
-var squareMeshIndexedNormals = []float32{
+var squareIndexedNormals = []float32{
     0.000000, 1.000000, 0.000000,
     0.000000, 1.000000, 0.000000,
     0.000000, 1.000000, 0.000000,
     0.000000, 1.000000, 0.000000,
 }
 
-var squareMeshIndicies = []uint32 {
+var squareVertexIndex = []uint32 {
     0, 1, 2,
     3, 0, 2,
 }
 
-var squareMeshObjects = []*MeshObject {
+var squareObjects = []*MeshObject {
     &MeshObject {
         "square", 0, 6,
         "square", false,
     },
 }
 
-const cubesMeshOBJ string = `
+const cubesOBJ string = `
 mtllib cubes.mtl
 o redCube
 v 0.414876 -1.594997 -0.480466
@@ -148,7 +148,7 @@ d 1.000000
 illum 2
 `
 
-var cubesMeshIndexedVertices = []float32 {
+var cubesIndexedVertices = []float32 {
     // red cube
 0.414876, -0.387669, -1.687793,
 0.414876, -1.594997, -1.687793,
@@ -185,7 +185,7 @@ var cubesMeshIndexedVertices = []float32 {
 -0.714147, 1.000000, -0.999999,
 }
 
-var cubesMeshIndexedNormals = []float32 {
+var cubesIndexedNormals = []float32 {
     // red cube
 -0.577300, 0.577300, -0.577300,
 -0.577300, -0.577300, -0.577300,
@@ -222,7 +222,7 @@ var cubesMeshIndexedNormals = []float32 {
 0.000000, 0.000000, -1.000000,
 }
 
-var cubesMeshIndicies = []uint32 {
+var cubesVertexIndex = []uint32 {
     0, 1, 2,
     3, 4, 1,
     5, 6, 4,
@@ -249,7 +249,7 @@ var cubesMeshIndicies = []uint32 {
     31, 23, 25,
 }
 
-var cubesMeshVertices = []float32 {
+var cubesVertices = []float32 {
     // red cube
     0.414876, -0.387669, -1.687793, // v04
     0.414876, -1.594997, -1.687793, // v03
@@ -326,7 +326,7 @@ var cubesMeshVertices = []float32 {
     -2.714148, 1.000000, -1.000000, // v16
 }
 
-var cubesMeshNormals = []float32 {
+var cubesNormals = []float32 {
     // red cube
     -0.577300, 0.577300, -0.577300, // n01
     -0.577300, -0.577300, -0.577300, // n02
@@ -403,7 +403,7 @@ var cubesMeshNormals = []float32 {
     0.000000, 0.000000, -1.000000, // n14
 }
 
-var cubesMeshObjects = []*MeshObject {
+var cubesObjects = []*MeshObject {
     &MeshObject {
         "redCube", 0, 36,
         "redCube", true,
@@ -413,3 +413,34 @@ var cubesMeshObjects = []*MeshObject {
         "blueCube", false,
     },
 }
+
+
+const texplaneOBJ string = `
+mtllib texplane.mtl
+o Plane
+v -1.934122 -1.188100 1.448717
+v 1.934122 -1.188100 1.448717
+v -1.934122 1.188100 -1.448717
+v 1.934122 1.188100 -1.448717
+vt 1.000000 0.000000
+vt 1.000000 1.000000
+vt 0.000000 1.000000
+vt 0.000000 0.000000
+vn 0.000000 0.773200 0.634100
+usemtl Material
+s off
+f 2/1/1 4/2/1 3/3/1
+f 1/4/1 2/1/1 3/3/1
+`
+
+const texplaneMTL1 string = `
+newmtl Material
+Ns 96.078431
+Ka 0.000000 0.000000 0.000000
+Kd 0.640000 0.640000 0.640000
+Ks 0.500000 0.500000 0.500000
+Ni 1.000000
+d 1.000000
+illum 2
+map_Kd /home/seb/personal/art/third-party/textures/bricks.diffuse.jpg
+`

@@ -6,36 +6,36 @@ import (
     "strings"
 )
 
-func TestLoadSquareMeshIndexed(t *testing.T) {
+func TestLoadSquareIndexed(t *testing.T) {
     t.Log("Testing: Square Mesh (Indexed)")
-    testLoadOBJFrom(t, squareMeshOBJ,
-                    squareMeshIndexedVertices,
+    testLoadOBJFrom(t, squareOBJ,
+                    squareIndexedVertices,
                     nil,
-                    squareMeshIndexedNormals,
-                    squareMeshIndicies,
-                    squareMeshObjects,
+                    squareIndexedNormals,
+                    squareVertexIndex,
+                    squareObjects,
                     true)
 }
 
-func TestLoadCubesMesh(t *testing.T) {
+func TestLoadCubes(t *testing.T) {
     t.Log("Testing: Cubes Mesh")
-    testLoadOBJFrom(t, cubesMeshOBJ,
-                    cubesMeshVertices,
+    testLoadOBJFrom(t, cubesOBJ,
+                    cubesVertices,
                     nil,
-                    cubesMeshNormals,
+                    cubesNormals,
                     nil,
-                    cubesMeshObjects,
+                    cubesObjects,
                     false)
 }
 
-func TestLoadCubesMeshIndexed(t *testing.T) {
+func TestLoadCubesIndexed(t *testing.T) {
     t.Log("Testing: Cubes Mesh (Indexed)")
-    testLoadOBJFrom(t, cubesMeshOBJ,
-                    cubesMeshIndexedVertices,
+    testLoadOBJFrom(t, cubesOBJ,
+                    cubesIndexedVertices,
                     nil,
-                    cubesMeshIndexedNormals,
-                    cubesMeshIndicies,
-                    cubesMeshObjects,
+                    cubesIndexedNormals,
+                    cubesVertexIndex,
+                    cubesObjects,
                     true)
 }
 
