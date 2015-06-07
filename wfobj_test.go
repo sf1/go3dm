@@ -95,14 +95,14 @@ func testLoadOBJFrom(t *testing.T, meshStr string,
         }
     }
     if expectedIndicies != nil {
-        if mesh.Indicies == nil {
+        if mesh.VertexIndex == nil {
             t.Error("Expected indicies")
         }
-        if len(expectedIndicies) != len(mesh.Indicies) {
+        if len(expectedIndicies) != len(mesh.VertexIndex) {
             t.Error("Unexpected number of indicies")
         }
         for i = 0; i < len(expectedIndicies); i++ {
-            if expectedIndicies[i] != mesh.Indicies[i] {
+            if expectedIndicies[i] != mesh.VertexIndex[i] {
                 t.Errorf("Unexpected index at %d", i)
             }
         }
@@ -181,9 +181,9 @@ func printMesh(mesh *TriangleMesh) {
             fmt.Printf("%f", n)
         }
     }
-    if mesh.Indicies != nil {
+    if mesh.VertexIndex != nil {
         fmt.Println("\n\nTriangle Indicies:")
-        for idx, e := range mesh.Indicies {
+        for idx, e := range mesh.VertexIndex {
             if idx % 3 == 0 { fmt.Println("") } else { fmt.Print(", ") }
             fmt.Printf("%d", e)
         }
@@ -193,8 +193,8 @@ func printMesh(mesh *TriangleMesh) {
         fmt.Printf("\n  %s\n", mo.Name)
         fmt.Printf("  - Material: %s\n", mo.MaterialRef)
         fmt.Printf("  - Smooth: %t\n", mo.Smooth)
-        fmt.Printf("  - Offset: %d\n", mo.IndexOffset)
-        fmt.Printf("  - Count: %d\n", mo.IndexCount)
+        fmt.Printf("  - Offset: %d\n", mo.VertexOffset)
+        fmt.Printf("  - Count: %d\n", mo.VertexCount)
     }
     fmt.Println("")
 }

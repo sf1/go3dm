@@ -26,7 +26,7 @@ type TriangleMesh struct {
     Vertices []float32
     Normals []float32
     TextureCoords []float32
-    Indicies []uint32
+    VertexIndex []uint32
     Objects []*MeshObject
 }
 
@@ -36,8 +36,8 @@ func (m *TriangleMesh) VTN() ([]float32, []float32, []float32) {
 
 type MeshObject struct {
     Name string
-    IndexOffset int32
-    IndexCount int32
+    VertexOffset int32
+    VertexCount int32
     MaterialRef string
     Smooth bool
 }
@@ -132,7 +132,7 @@ func main() {
 
     fmt.Fprintf(f, "\n    // Indicies")
     fmt.Fprintf(f, "\n    []uint32{")
-    for idx, val := range mesh.Indicies {
+    for idx, val := range mesh.VertexIndex {
         if (idx % 10) == 0 { fmt.Fprintf(f, "\n       ") }
         fmt.Fprintf(f," %d,", val)
     }
@@ -143,7 +143,7 @@ func main() {
     for _, obj := range mesh.Objects {
         fmt.Fprintf(f,
             "\n        &MeshObject{\"%s\", %d, %d, \"%s\", %t},",
-            obj.Name, obj.IndexOffset, obj.IndexCount,
+            obj.Name, obj.VertexOffset, obj.VertexCount,
             obj.MaterialRef, obj.Smooth)
     }
     fmt.Fprintf(f, "\n    },")

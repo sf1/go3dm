@@ -30,7 +30,7 @@ if err != nil { panic(err) }
 // Print vertex and normal slices
 fmt.Println(mesh.Vertices)
 fmt.Println(mesh.Normals}
-fmt.Println(mesh.Indicies} // triangle indicies
+fmt.Println(mesh.VertexIndex}
 
 // Iterate through named objects / polygon groups
 for _, obj := range mesh.Objects {

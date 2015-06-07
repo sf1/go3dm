@@ -6,7 +6,7 @@ type TriangleMesh struct {
     Vertices []float32
     Normals []float32
     TextureCoords []float32
-    Indicies []uint32
+    VertexIndex []uint32
     Objects []*MeshObject
 }
 
@@ -16,16 +16,16 @@ func (m *TriangleMesh) VTN() ([]float32, []float32, []float32) {
 
 type MeshObject struct {
     Name string
-    IndexOffset int32
-    IndexCount int32
+    VertexOffset int32
+    VertexCount int32
     MaterialRef string
     Smooth bool
 }
 
 func (mo1 *MeshObject) Equals(mo2 *MeshObject) bool {
     if mo1.Name != mo2.Name { return false }
-    if mo1.IndexOffset != mo2.IndexOffset { return false }
-    if mo1.IndexCount != mo2.IndexCount { return false }
+    if mo1.VertexOffset != mo2.VertexOffset { return false }
+    if mo1.VertexCount != mo2.VertexCount { return false }
     if mo1.MaterialRef != mo2.MaterialRef { return false }
     if mo1.Smooth != mo2.Smooth { return false }
     return true

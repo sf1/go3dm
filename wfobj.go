@@ -108,7 +108,7 @@ func LoadOBJFrom(reader io.Reader, index bool) (*OBJMesh, error) {
         }
     }
 
-    if state.meshObjects[0].IndexOffset == -1 {
+    if state.meshObjects[0].VertexOffset == -1 {
         state.meshObjects = state.meshObjects[1:]
     }
 
@@ -139,20 +139,20 @@ func LoadOBJFrom(reader io.Reader, index bool) (*OBJMesh, error) {
 
 func processFace(faceIndicies []string, state *OLState) error {
     mo := state.meshObjects[len(state.meshObjects)-1]
-    if mo.IndexOffset == -1 {
+    if mo.VertexOffset == -1 {
         if state.index {
-            mo.IndexOffset = int32(len(state.indicies))
+            mo.VertexOffset = int32(len(state.indicies))
         } else {
-            mo.IndexOffset = int32(len(state.vertices.Values) / 3)
+            mo.VertexOffset = int32(len(state.vertices.Values) / 3)
         }
-        mo.IndexCount = 0
+        mo.VertexCount = 0
     }
     for _, fidx := range faceIndicies {
         vtnIdx, ok := state.vtnMap[fidx]
         if state.index {
             if ok {
                 state.indicies = append(state.indicies, vtnIdx)
-                mo.IndexCount++
+                mo.VertexCount++
                 continue
             }
             vtnIdx = uint32(state.vertices.VectorCount())
@@ -173,7 +173,7 @@ func processFace(faceIndicies []string, state *OLState) error {
             state.vtnMap[fidx] = vtnIdx
             state.indicies = append(state.indicies, vtnIdx)
         }
-        mo.IndexCount++
+        mo.VertexCount++
     }
     return nil
 }
