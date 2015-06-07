@@ -13,6 +13,7 @@ func TestLoadSquareMeshIndexed(t *testing.T) {
                     nil,
                     squareMeshIndexedNormals,
                     squareMeshIndicies,
+                    squareMeshObjects,
                     true)
 }
 
@@ -23,6 +24,7 @@ func TestLoadCubesMesh(t *testing.T) {
                     nil,
                     cubesMeshNormals,
                     nil,
+                    cubesMeshObjects,
                     false)
 }
 
@@ -33,12 +35,17 @@ func TestLoadCubesMeshIndexed(t *testing.T) {
                     nil,
                     cubesMeshIndexedNormals,
                     cubesMeshIndicies,
+                    cubesMeshObjects,
                     true)
 }
 
-func testLoadOBJFrom(t *testing.T, meshStr string, expectedVertices []float32,
-                    expectedTexCoords []float32, expectedNormals []float32,
-                    expectedIndicies []uint32, index bool) {
+func testLoadOBJFrom(t *testing.T, meshStr string,
+                    expectedVertices []float32,
+                    expectedTexCoords []float32,
+                    expectedNormals []float32,
+                    expectedIndicies []uint32,
+                    expectedObjects []*MeshObject,
+                    index bool) {
     var i int
     r := strings.NewReader(meshStr)
     mesh, err := LoadOBJFrom(r, index)
@@ -89,7 +96,7 @@ func testLoadOBJFrom(t *testing.T, meshStr string, expectedVertices []float32,
     }
     if expectedIndicies != nil {
         if mesh.Indicies == nil {
-            t.Error("Didn't expect any indicies")
+            t.Error("Expected indicies")
         }
         if len(expectedIndicies) != len(mesh.Indicies) {
             t.Error("Unexpected number of indicies")
@@ -100,8 +107,20 @@ func testLoadOBJFrom(t *testing.T, meshStr string, expectedVertices []float32,
             }
         }
     }
-    // TO DO:
-    // Test if MeshObjects are generated correctly!!!!
+    if expectedObjects != nil {
+        if mesh.Objects == nil {
+            t.Error("Expected mesh objects")
+        }
+        if len(expectedObjects) != len(mesh.Objects) {
+            t.Error("Unexpected number of mesh objects")
+        }
+        for i = 0; i < len(expectedObjects); i++ {
+            if !expectedObjects[i].Equals(mesh.Objects[i]) {
+                t.Errorf("Mesh object %d doesn't match expectation", i)
+            }
+        }
+    }
+    //printMesh(&mesh.TriangleMesh)
 }
 
 func TestLoadCubesMTL(t *testing.T) {
@@ -162,17 +181,20 @@ func printMesh(mesh *TriangleMesh) {
             fmt.Printf("%f", n)
         }
     }
-    fmt.Println("\n\nElements")
-    for idx, e := range mesh.Indicies {
-        if idx % 3 == 0 { fmt.Println("") } else { fmt.Print(", ") }
-        fmt.Printf("%d", e)
+    if mesh.Indicies != nil {
+        fmt.Println("\n\nTriangle Indicies:")
+        for idx, e := range mesh.Indicies {
+            if idx % 3 == 0 { fmt.Println("") } else { fmt.Print(", ") }
+            fmt.Printf("%d", e)
+        }
     }
-    fmt.Println("\n\nObjects")
+    fmt.Println("\n\nObjects:")
     for _, mo := range mesh.Objects {
-        fmt.Printf("------------\n%s\n------------\n", mo.Name)
-        fmt.Printf("Material: %s\n", mo.MaterialRef)
-        fmt.Printf("Smooth: %t\n", mo.Smooth)
-        fmt.Printf("Offset: %d\n", mo.IndexOffset)
-        fmt.Printf("Count: %d\n", mo.IndexCount)
+        fmt.Printf("\n  %s\n", mo.Name)
+        fmt.Printf("  - Material: %s\n", mo.MaterialRef)
+        fmt.Printf("  - Smooth: %t\n", mo.Smooth)
+        fmt.Printf("  - Offset: %d\n", mo.IndexOffset)
+        fmt.Printf("  - Count: %d\n", mo.IndexCount)
     }
+    fmt.Println("")
 }

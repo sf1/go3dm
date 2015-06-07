@@ -57,6 +57,13 @@ var squareMeshIndicies = []uint32 {
     3, 0, 2,
 }
 
+var squareMeshObjects = []*MeshObject {
+    &MeshObject {
+        "square", 0, 6,
+        "square", false,
+    },
+}
+
 const cubesMeshOBJ string = `
 mtllib cubes.mtl
 o redCube
@@ -394,4 +401,15 @@ var cubesMeshNormals = []float32 {
     0.000000, 0.000000, -1.000000, // n14
     0.000000, 0.000000, -1.000000, // n14
     0.000000, 0.000000, -1.000000, // n14
+}
+
+var cubesMeshObjects = []*MeshObject {
+    &MeshObject {
+        "redCube", 0, 36,
+        "redCube", true,
+    },
+    &MeshObject {
+        "blueCube", 36, 36,
+        "blueCube", false,
+    },
 }
