@@ -21,22 +21,24 @@ go get github.com/sf1/go3dm/obj2go
 
 ## Usage
 
+Load OBJ into an indexed triangle mesh:
+
 ```
-mesh, materials, err := go3dm.LoadOBJ("al.obj")
+mesh, materials, err := go3dm.LoadOBJ("al.obj", true)
 if err != nil { panic(err) }
 
 // Print vertex and normal slices
-fmt.Println(mesh.Vertices())
-fmt.Println(mesh.Normals()}
-fmt.Println(mesh.Indicies()}
+fmt.Println(mesh.Vertices)
+fmt.Println(mesh.Normals}
+fmt.Println(mesh.Indicies} // triangle indicies
 
 // Iterate through named objects / polygon groups
-for _, obj := range mesh.Objects() {
-    fmt.Println(obj.Name())
+for _, obj := range mesh.Objects {
+    fmt.Println(obj.Name)
     // ...
     // Get material, if any
-    if obj.MaterialRef() != "" {
-        mat := materials[obj.MaterialRef()]
+    if obj.MaterialRef != "" {
+        mat := materials[obj.MaterialRef]
         fmt.Println(mat)
     }
 }
