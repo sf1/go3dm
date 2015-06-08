@@ -5,7 +5,18 @@ import (
     "testing"
     "strings"
 )
-/*
+
+func TestLoadTexPlane(t *testing.T) {
+    t.Log("Testing: Texplane Mesh")
+    testLoadOBJFrom(t, texplaneOBJ,
+                    texplaneVertices,
+                    texplaneTexCoords,
+                    texplaneNormals,
+                    nil,
+                    texplaneObjects,
+                    false)
+}
+
 func TestLoadSquareIndexed(t *testing.T) {
     t.Log("Testing: Square Mesh (Indexed)")
     testLoadOBJFrom(t, squareOBJ,
@@ -38,17 +49,6 @@ func TestLoadCubesIndexed(t *testing.T) {
                     cubesObjects,
                     true)
 }
-*/
-func TestLoadTexPlane(t *testing.T) {
-    t.Log("Testing: Texplane Mesh")
-    testLoadOBJFrom(t, texplaneOBJ,
-                    texplaneVertices,
-                    texplaneTexCoords,
-                    texplaneNormals,
-                    nil,
-                    texplaneObjects,
-                    false)
-}
 
 func testLoadOBJFrom(t *testing.T, meshStr string,
                     expectedVertices []float32,
@@ -60,7 +60,7 @@ func testLoadOBJFrom(t *testing.T, meshStr string,
     var i int
     r := strings.NewReader(meshStr)
     mesh, err := LoadOBJFrom(r, index)
-    printMesh(&mesh.TriangleMesh)
+    //printMesh(&mesh.TriangleMesh)
     if err != nil { t.Error(err) }
     vertices, texcoords, normals := mesh.VTN()
     if vertices == nil {
@@ -133,7 +133,7 @@ func testLoadOBJFrom(t *testing.T, meshStr string,
         }
     }
 }
-/*
+
 func TestLoadCubesMTL(t *testing.T) {
     t.Log("Testing: Cubes Mesh Material")
     r := strings.NewReader(cubesMTL)
@@ -174,7 +174,7 @@ func TestLoadCubesMTL(t *testing.T) {
         t.Error("Wrong Ks value")
     }
 }
-*/
+
 func printMesh(mesh *TriangleMesh) {
     vertices, texcoords, normals := mesh.VTN()
     fmt.Println("\nVertices:")
