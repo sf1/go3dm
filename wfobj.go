@@ -57,9 +57,9 @@ type OLState struct {
 func LoadOBJFrom(reader io.Reader, index bool) (*OBJMesh, error) {
     // Set up state struct
     state := &OLState {
-        NewF32VA(3), NewF32VA(3), NewF32VA(3),
+        NewF32VA(3), NewF32VA(3), NewF32VA(2),
         make(map[string]uint32),
-        NewF32VA(3), NewF32VA(3), NewF32VA(3),
+        NewF32VA(3), NewF32VA(3), NewF32VA(2),
         make([]uint32, 0, 10),
         make([]*MeshObject, 0, 1),
         index,
@@ -107,6 +107,8 @@ func LoadOBJFrom(reader io.Reader, index bool) (*OBJMesh, error) {
                 strings.Join(tokens[1:]," ")
         }
     }
+
+    fmt.Println(state.texTmp)
 
     if state.meshObjects[0].VertexOffset == -1 {
         state.meshObjects = state.meshObjects[1:]
@@ -158,6 +160,7 @@ func processFace(faceIndicies []string, state *OLState) error {
             vtnIdx = uint32(state.vertices.VectorCount())
         }
         vIdx, tIdx, nIdx, err := parseFaceIndicies(fidx)
+        fmt.Println(vIdx, tIdx, nIdx)
         if err != nil {return err}
         state.vertices.AppendVector(
             state.verticesTmp.GetVector(vIdx-1))
@@ -166,6 +169,7 @@ func processFace(faceIndicies []string, state *OLState) error {
                 state.normalsTmp.GetVector(nIdx-1))
         }
         if tIdx > 0 {
+            fmt.Println(state.texTmp.GetVector(tIdx-1))
             state.texCoords.AppendVector(
                 state.texTmp.GetVector(tIdx-1))
         }
@@ -194,6 +198,9 @@ func parseFaceIndicies(fidx string) (int, int, int, error) {
     val, err = strconv.ParseUint(parts[2], 10, 32)
     if err != nil {return 0,0,0,err}
     nIdx = int(val)
+    val, err = strconv.ParseUint(parts[1], 10, 32)
+    if err != nil {return 0,0,0,err}
+    tIdx = int(val)
     return vIdx, tIdx, nIdx, nil
 }
 

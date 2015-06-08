@@ -5,7 +5,7 @@ import (
     "testing"
     "strings"
 )
-
+/*
 func TestLoadSquareIndexed(t *testing.T) {
     t.Log("Testing: Square Mesh (Indexed)")
     testLoadOBJFrom(t, squareOBJ,
@@ -38,6 +38,17 @@ func TestLoadCubesIndexed(t *testing.T) {
                     cubesObjects,
                     true)
 }
+*/
+func TestLoadTexPlane(t *testing.T) {
+    t.Log("Testing: Texplane Mesh")
+    testLoadOBJFrom(t, texplaneOBJ,
+                    texplaneVertices,
+                    texplaneTexCoords,
+                    texplaneNormals,
+                    nil,
+                    texplaneObjects,
+                    false)
+}
 
 func testLoadOBJFrom(t *testing.T, meshStr string,
                     expectedVertices []float32,
@@ -49,6 +60,7 @@ func testLoadOBJFrom(t *testing.T, meshStr string,
     var i int
     r := strings.NewReader(meshStr)
     mesh, err := LoadOBJFrom(r, index)
+    printMesh(&mesh.TriangleMesh)
     if err != nil { t.Error(err) }
     vertices, texcoords, normals := mesh.VTN()
     if vertices == nil {
@@ -87,7 +99,7 @@ func testLoadOBJFrom(t *testing.T, meshStr string,
             if len(texcoords) != len(expectedTexCoords) {
                 t.Error("Unexpected number of texture coordinates")
             }
-            for i = 0; i < len(normals); i++ {
+            for i = 0; i < len(texcoords); i++ {
                 if texcoords[i] != expectedTexCoords[i] {
                     t.Errorf("Unexpected texture data at index %d", i)
                 }
@@ -120,9 +132,8 @@ func testLoadOBJFrom(t *testing.T, meshStr string,
             }
         }
     }
-    //printMesh(&mesh.TriangleMesh)
 }
-
+/*
 func TestLoadCubesMTL(t *testing.T) {
     t.Log("Testing: Cubes Mesh Material")
     r := strings.NewReader(cubesMTL)
@@ -163,7 +174,7 @@ func TestLoadCubesMTL(t *testing.T) {
         t.Error("Wrong Ks value")
     }
 }
-
+*/
 func printMesh(mesh *TriangleMesh) {
     vertices, texcoords, normals := mesh.VTN()
     fmt.Println("\nVertices:")
@@ -172,7 +183,11 @@ func printMesh(mesh *TriangleMesh) {
         fmt.Printf("%f", v)
     }
     if texcoords != nil {
-        fmt.Println("\n\nTexture Coordinates:\n", normals)
+        fmt.Println("\n\nTexture Coordinates:")
+        for idx, t := range texcoords {
+            if idx % 2 == 0 { fmt.Println("") } else { fmt.Print(", ") }
+            fmt.Printf("%f", t)
+        }
     }
     if normals != nil {
         fmt.Println("\n\nNormals:")
