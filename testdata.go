@@ -414,6 +414,33 @@ var cubesObjects = []*MeshObject {
     },
 }
 
+var cubesMaterials = []*Material {
+    &Material {
+        "blueCube", // Name
+        []float32{0.0, 0.0, 0.0}, // Ka
+        []float32{0.0, 0.0, 0.64}, // Kd
+        []float32{0.5, 0.5, 0.5}, // Ks
+        96.078431, // Ns
+        1.0, // Tr/d
+        "", // Ka Map
+        "", // Kd Map
+        "", // Ks Map
+        "", // Map Path
+    },
+    &Material {
+        "redCube", // Name
+        []float32{0.0, 0.0, 0.0}, // Ka
+        []float32{0.64, 0.0, 0.0}, // Kd
+        []float32{0.5, 0.5, 0.5}, // Ks
+        96.078431, // Ns
+        1.0, // Tr/d
+        "", // Ka Map
+        "", // Kd Map
+        "", // Ks Map
+        "", // Map Path
+    },
+}
+
 
 const texplaneOBJ string = `
 mtllib texplane.mtl

@@ -10,7 +10,7 @@ func TestLoadTexPlane(t *testing.T) {
     t.Log("Testing: Texplane Mesh")
     r := strings.NewReader(texplaneOBJ)
     mesh, err := LoadOBJFrom(r, false)
-    if err != nil { t.Error(err) }
+    if err != nil { t.Error(err); return }
     checkMesh(t, &mesh.TriangleMesh,
                 texplaneVertices,
                 texplaneTexCoords,
@@ -22,7 +22,7 @@ func TestLoadTexPlane(t *testing.T) {
 func TestLoadTexPlaneAll(t *testing.T) {
     t.Log("Testing: Texplane Mesh V2, Materials, Textures")
     mesh, materials, err := LoadOBJ("test-meshes/texplane2.obj", false)
-    if err != nil { t.Error(err) }
+    if err != nil { t.Error(err); return }
     checkMesh(t, mesh,
                 texplaneVertices,
                 texplaneTexCoords,
@@ -32,26 +32,11 @@ func TestLoadTexPlaneAll(t *testing.T) {
     checkMaterials(t, materials, texplaneV2Materials)
 }
 
-func checkMaterials(t *testing.T,
-                    materials map[string]*Material,
-                    expectedMaterials []*Material) {
-    if len(materials) != len(expectedMaterials) {
-        t.Errorf("Unexpected number of materials %d", len(materials))
-    }
-    for _, em := range expectedMaterials {
-        m, ok := materials[em.Name]
-        if !ok { t.Errorf("Expected material not found: %s", em.Name) }
-        if !em.Equals(m) {
-            t.Errorf("Material differs from expected material:\n%v\n%v", m, em)
-        }
-    }
-}
-
 func TestLoadSquareIndexed(t *testing.T) {
     t.Log("Testing: Square Mesh (Indexed)")
     r := strings.NewReader(squareOBJ)
     mesh, err := LoadOBJFrom(r, true)
-    if err != nil { t.Error(err) }
+    if err != nil { t.Error(err); return }
     checkMesh(t, &mesh.TriangleMesh,
                 squareIndexedVertices,
                 nil,
@@ -64,7 +49,7 @@ func TestLoadCubes(t *testing.T) {
     t.Log("Testing: Cubes Mesh")
     r := strings.NewReader(cubesOBJ)
     mesh, err := LoadOBJFrom(r, false)
-    if err != nil { t.Error(err) }
+    if err != nil { t.Error(err); return }
     checkMesh(t, &mesh.TriangleMesh,
                 cubesVertices,
                 nil,
@@ -77,13 +62,23 @@ func TestLoadCubesIndexed(t *testing.T) {
     t.Log("Testing: Cubes Mesh (Indexed)")
     r := strings.NewReader(cubesOBJ)
     mesh, err := LoadOBJFrom(r, true)
-    if err != nil { t.Error(err) }
+    if err != nil { t.Error(err); return }
     checkMesh(t, &mesh.TriangleMesh,
                 cubesIndexedVertices,
                 nil,
                 cubesIndexedNormals,
                 cubesVertexIndex,
                 cubesObjects)
+}
+
+func TestLoadCubesMTL(t *testing.T) {
+    t.Log("Testing: Cubes Mesh Material")
+    r := strings.NewReader(cubesMTL)
+    materials, err := LoadMTLFrom(r)
+    if err != nil { t.Error(err); return }
+    matMap := make(map[string]*Material)
+    for _, m := range materials { matMap[m.Name] = m }
+    checkMaterials(t, matMap, cubesMaterials)
 }
 
 func checkMesh(t *testing.T, mesh *TriangleMesh,
@@ -96,28 +91,34 @@ func checkMesh(t *testing.T, mesh *TriangleMesh,
     vertices, texcoords, normals := mesh.VTN()
     if vertices == nil {
         t.Error("Didn't load any vertices")
+        return
     }
     if expectedVertices != nil {
         if len(vertices) != len(expectedVertices) {
             t.Error("Unexpected number of vertices")
+            return
         }
         for i = 0; i < len(vertices); i++ {
             if vertices[i] != expectedVertices[i] {
                 t.Errorf("Unexpected vertex data at index %d", i)
+                return
             }
         }
     }
     if normals != nil {
         if len(vertices) != len(normals) {
             t.Error("Number of normals should equal number of vertices")
+            return
         }
         if expectedNormals != nil {
             if len(normals) != len(expectedNormals) {
                 t.Error("Unexpected number of normals")
+                return
             }
             for i = 0; i < len(normals); i++ {
                 if normals[i] != expectedNormals[i] {
                     t.Errorf("Unexpected normal data at index %d", i)
+                    return
                 }
             }
         }
@@ -125,14 +126,17 @@ func checkMesh(t *testing.T, mesh *TriangleMesh,
     if texcoords != nil {
         if len(vertices)/3 != len(texcoords)/2 {
             t.Error("Number of texture coords should equal number of vertices")
+            return
         }
         if expectedTexCoords != nil {
             if len(texcoords) != len(expectedTexCoords) {
                 t.Error("Unexpected number of texture coordinates")
+                return
             }
             for i = 0; i < len(texcoords); i++ {
                 if texcoords[i] != expectedTexCoords[i] {
                     t.Errorf("Unexpected texture data at index %d", i)
+                    return
                 }
             }
         }
@@ -140,69 +144,54 @@ func checkMesh(t *testing.T, mesh *TriangleMesh,
     if expectedIndicies != nil {
         if mesh.VertexIndex == nil {
             t.Error("Expected indicies")
+            return
         }
         if len(expectedIndicies) != len(mesh.VertexIndex) {
             t.Error("Unexpected number of indicies")
+            return
         }
         for i = 0; i < len(expectedIndicies); i++ {
             if expectedIndicies[i] != mesh.VertexIndex[i] {
                 t.Errorf("Unexpected index at %d", i)
+                return
             }
         }
     }
     if expectedObjects != nil {
         if mesh.Objects == nil {
             t.Error("Expected mesh objects")
+            return
         }
         if len(expectedObjects) != len(mesh.Objects) {
             t.Error("Unexpected number of mesh objects")
+            return
         }
         for i = 0; i < len(expectedObjects); i++ {
             if !expectedObjects[i].Equals(mesh.Objects[i]) {
                 t.Errorf("Mesh object %d doesn't match expectation", i)
+                return
             }
         }
     }
 }
 
-func TestLoadCubesMTL(t *testing.T) {
-    t.Log("Testing: Cubes Mesh Material")
-    r := strings.NewReader(cubesMTL)
-    materials, err := LoadMTLFrom(r)
-    if err != nil { t.Error(err) }
-    if len(materials) != 2 {
-        t.Error("Expected 2 materials")
+func checkMaterials(t *testing.T,
+                    materials map[string]*Material,
+                    expectedMaterials []*Material) {
+    if len(materials) != len(expectedMaterials) {
+        t.Errorf("Unexpected number of materials %d", len(materials))
+        return
     }
-    if materials[0].Name != "blueCube" {
-        t.Error("Expected blueCube material")
-    }
-    if materials[0].Ns != 96.078431 {
-        t.Error("Wrong Ns value")
-    }
-    if materials[0].Ka[2] != 0.0{
-        t.Error("Wrong Ka value")
-    }
-    if materials[0].Kd[2] != 0.64{
-        t.Error("Wrong Kd value")
-    }
-    if materials[0].Ks[1] != 0.5{
-        t.Error("Wrong Ks value")
-    }
-
-    if materials[1].Name != "redCube" {
-        t.Error("Expected redCube material")
-    }
-    if materials[1].Ns != 96.078431 {
-        t.Error("Wrong Ns value")
-    }
-    if materials[1].Ka[2] != 0.0{
-        t.Error("Wrong Ka value")
-    }
-    if materials[1].Kd[0] != 0.64{
-        t.Error("Wrong Kd value")
-    }
-    if materials[1].Ks[2] != 0.5{
-        t.Error("Wrong Ks value")
+    for _, em := range expectedMaterials {
+        m, ok := materials[em.Name]
+        if !ok {
+            t.Errorf("Expected material not found: %s", em.Name)
+            return
+        }
+        if !em.Equals(m) {
+            t.Errorf("Material differs from expected material:\n%v\n%v", m, em)
+            return
+        }
     }
 }
 
