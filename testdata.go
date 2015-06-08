@@ -478,3 +478,18 @@ var texplaneObjects = []*MeshObject {
         "Material", false,
     },
 }
+
+var texplaneV2Materials = []*Material {
+    &Material {
+        "Material", // Name
+        []float32{0.0, 0.0, 0.0}, // Ka
+        []float32{0.64, 0.64, 0.64}, // Kd
+        []float32{0.5, 0.5, 0.5}, // Ks
+        96.078431, // Ns
+        1.0, // Tr/d
+        "", // Ka Map
+        "bricks.diffuse.jpg", // Kd Map
+        "", // Ks Map
+        "", // Map Path
+    },
+}

@@ -49,9 +49,9 @@ type Material struct {
     Ks []float32
     Ns float32
     Tr float32
-    KaMapName string
-    KdMapName string
-    KsMapName string
+    KaMap string
+    KdMap string
+    KsMap string
 }
 `
 
@@ -165,9 +165,9 @@ func main() {
                     mat.Ks[0], mat.Ks[1], mat.Ks[2])
         fmt.Fprintf(f,"\n        %f, %f,", mat.Ns, mat.Tr)
         fmt.Fprintf(f,"\n        \"%s\", \"%s\", \"%s\",",
-            mat.KaMapName,
-            mat.KdMapName,
-            mat.KsMapName)
+            mat.KaMap,
+            mat.KdMap,
+            mat.KsMap)
         fmt.Fprintf(f,"\n    },")
     }
     fmt.Fprintf(f, "\n}")

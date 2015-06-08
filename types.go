@@ -38,9 +38,25 @@ type Material struct {
     Ks []float32
     Ns float32
     Tr float32
-    KaMapName string
-    KdMapName string
-    KsMapName string
+    KaMap string
+    KdMap string
+    KsMap string
+    Folder string
+}
+
+func (mat1 *Material) Equals(mat2 *Material) bool {
+    if mat1.Name != mat2.Name { return false }
+    for i := 0; i < 3; i++ {
+        if mat1.Ka[i] != mat2.Ka[i] { return false }
+        if mat1.Kd[i] != mat2.Kd[i] { return false }
+        if mat1.Ks[i] != mat2.Ks[i] { return false }
+    }
+    if mat1.Ns != mat2.Ns { return false }
+    if mat1.Tr != mat2.Tr { return false }
+    if mat1.KaMap != mat2.KaMap { return false }
+    if mat1.KdMap != mat2.KdMap { return false }
+    if mat1.KsMap != mat2.KsMap { return false }
+    return true
 }
 
 // Internal Structs

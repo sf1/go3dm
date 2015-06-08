@@ -8,60 +8,91 @@ import (
 
 func TestLoadTexPlane(t *testing.T) {
     t.Log("Testing: Texplane Mesh")
-    testLoadOBJFrom(t, texplaneOBJ,
-                    texplaneVertices,
-                    texplaneTexCoords,
-                    texplaneNormals,
-                    nil,
-                    texplaneObjects,
-                    false)
+    r := strings.NewReader(texplaneOBJ)
+    mesh, err := LoadOBJFrom(r, false)
+    if err != nil { t.Error(err) }
+    checkMesh(t, &mesh.TriangleMesh,
+                texplaneVertices,
+                texplaneTexCoords,
+                texplaneNormals,
+                nil,
+                texplaneObjects)
+}
+
+func TestLoadTexPlaneAll(t *testing.T) {
+    t.Log("Testing: Texplane Mesh V2, Materials, Textures")
+    mesh, materials, err := LoadOBJ("test-meshes/texplane2.obj", false)
+    if err != nil { t.Error(err) }
+    checkMesh(t, mesh,
+                texplaneVertices,
+                texplaneTexCoords,
+                texplaneNormals,
+                nil,
+                texplaneObjects)
+    checkMaterials(t, materials, texplaneV2Materials)
+}
+
+func checkMaterials(t *testing.T,
+                    materials map[string]*Material,
+                    expectedMaterials []*Material) {
+    if len(materials) != len(expectedMaterials) {
+        t.Errorf("Unexpected number of materials %d", len(materials))
+    }
+    for _, em := range expectedMaterials {
+        m, ok := materials[em.Name]
+        if !ok { t.Errorf("Expected material not found: %s", em.Name) }
+        if !em.Equals(m) {
+            t.Errorf("Material differs from expected material:\n%v\n%v", m, em)
+        }
+    }
 }
 
 func TestLoadSquareIndexed(t *testing.T) {
     t.Log("Testing: Square Mesh (Indexed)")
-    testLoadOBJFrom(t, squareOBJ,
-                    squareIndexedVertices,
-                    nil,
-                    squareIndexedNormals,
-                    squareVertexIndex,
-                    squareObjects,
-                    true)
+    r := strings.NewReader(squareOBJ)
+    mesh, err := LoadOBJFrom(r, true)
+    if err != nil { t.Error(err) }
+    checkMesh(t, &mesh.TriangleMesh,
+                squareIndexedVertices,
+                nil,
+                squareIndexedNormals,
+                squareVertexIndex,
+                squareObjects)
 }
 
 func TestLoadCubes(t *testing.T) {
     t.Log("Testing: Cubes Mesh")
-    testLoadOBJFrom(t, cubesOBJ,
-                    cubesVertices,
-                    nil,
-                    cubesNormals,
-                    nil,
-                    cubesObjects,
-                    false)
+    r := strings.NewReader(cubesOBJ)
+    mesh, err := LoadOBJFrom(r, false)
+    if err != nil { t.Error(err) }
+    checkMesh(t, &mesh.TriangleMesh,
+                cubesVertices,
+                nil,
+                cubesNormals,
+                nil,
+                cubesObjects)
 }
 
 func TestLoadCubesIndexed(t *testing.T) {
     t.Log("Testing: Cubes Mesh (Indexed)")
-    testLoadOBJFrom(t, cubesOBJ,
-                    cubesIndexedVertices,
-                    nil,
-                    cubesIndexedNormals,
-                    cubesVertexIndex,
-                    cubesObjects,
-                    true)
+    r := strings.NewReader(cubesOBJ)
+    mesh, err := LoadOBJFrom(r, true)
+    if err != nil { t.Error(err) }
+    checkMesh(t, &mesh.TriangleMesh,
+                cubesIndexedVertices,
+                nil,
+                cubesIndexedNormals,
+                cubesVertexIndex,
+                cubesObjects)
 }
 
-func testLoadOBJFrom(t *testing.T, meshStr string,
-                    expectedVertices []float32,
-                    expectedTexCoords []float32,
-                    expectedNormals []float32,
-                    expectedIndicies []uint32,
-                    expectedObjects []*MeshObject,
-                    index bool) {
+func checkMesh(t *testing.T, mesh *TriangleMesh,
+                expectedVertices []float32,
+                expectedTexCoords []float32,
+                expectedNormals []float32,
+                expectedIndicies []uint32,
+                expectedObjects []*MeshObject) {
     var i int
-    r := strings.NewReader(meshStr)
-    mesh, err := LoadOBJFrom(r, index)
-    //printMesh(&mesh.TriangleMesh)
-    if err != nil { t.Error(err) }
     vertices, texcoords, normals := mesh.VTN()
     if vertices == nil {
         t.Error("Didn't load any vertices")

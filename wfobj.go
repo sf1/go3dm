@@ -26,6 +26,7 @@ func LoadOBJ(objPath string, index bool) (*TriangleMesh,
         if !filepath.IsAbs(mtlPath) {
             mtlPath = filepath.Join(absDir, objMesh.MTLLib)
         }
+        absMtlDir := filepath.Dir(mtlPath)
         mtlFile, err := os.Open(mtlPath)
         if err != nil {
             return nil, nil, fmt.Errorf(
@@ -35,10 +36,16 @@ func LoadOBJ(objPath string, index bool) (*TriangleMesh,
         matList, err := LoadMTLFrom(mtlFile)
         if err != nil { return nil, nil, err}
         for _, mat := range matList {
+            mat.Folder = absMtlDir
             matMap[mat.Name] = mat
         }
     }
     return &objMesh.TriangleMesh, matMap, nil
+}
+
+func makeAbsPath(absMtlDir, path string) string {
+    if filepath.IsAbs(path) { return path }
+    return filepath.Join(absMtlDir, path)
 }
 
 type OLState struct {
@@ -234,11 +241,11 @@ func LoadMTLFrom(reader io.Reader) ([]*Material, error) {
                 if err != nil {return nil, err}
                 curMat.Tr = val[0]
             case "map_Ka":
-                curMat.KaMapName = strings.Join(tokens[1:]," ")
+                curMat.KaMap = strings.Join(tokens[1:]," ")
             case "map_Kd":
-                curMat.KdMapName = strings.Join(tokens[1:]," ")
+                curMat.KdMap = strings.Join(tokens[1:]," ")
             case "map_Ks":
-                curMat.KsMapName = strings.Join(tokens[1:]," ")
+                curMat.KsMap = strings.Join(tokens[1:]," ")
             }
         }
     }
