@@ -1,7 +1,0 @@
-=== RUN TestLoadSquareIndexed
-0 0 0
---- FAIL: TestLoadSquareIndexed (0.00s)
-	wfobj_test.go:10: Testing: Square Mesh (Indexed)
-	wfobj_test.go:64: strconv.ParseUint: parsing "": invalid syntax
-exit status 2
-FAIL	github.com/sf1/go3dm	0.002s
